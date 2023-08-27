@@ -10,6 +10,54 @@ const options = {
   }
 }
 
+function compareByVote(a, b) {
+  if (a.vote_average < b.vote_average) {
+    return 1
+  }
+  if (a.vote_average > b.vote_average) {
+    return -1
+  }
+  return 0
+}
+
+function CrewFilterByName(array) {
+  let reduced = array.reduce((obj, item) => {
+    item.job = Array(item.job)
+    obj[item.name] ? obj[item.name].job.push(...item.job) : (obj[item.name] = item)
+    return obj
+  }, {})
+
+  return reduced
+}
+function CrewFilterByDepartment(array) {
+  let reduced = array.reduce((obj, item) => {
+    if (obj[item.department]) {
+      obj[item.department].push(item)
+    } else {
+      obj[item.department] = [item]
+    }
+    return obj
+  }, {})
+  return reduced
+}
+function sortObjByKeys(unorderedObj) {
+  const ordered = Object.keys(unorderedObj)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = unorderedObj[key]
+      return obj
+    }, {})
+  return ordered
+}
+function getRandomColor() {
+  var letters = '01234567'.split('')
+  var color = '#'
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * letters.length)]
+  }
+  return color
+}
+
 export const useDbStore = defineStore('dbstore', () => {
   const movieLists = reactive({ Streaming: null, Popular: null, TopRated: null, Upcoming: null })
   const trendingLists = reactive({
@@ -25,7 +73,9 @@ export const useDbStore = defineStore('dbstore', () => {
     'Top Rated': null
   })
   const movie = ref(null)
-
+  function resetStore() {
+    movie.value = null
+  }
   /**
    *Documentation
    * @param {now_playing} now_playing NowPlayingMovies
@@ -169,14 +219,63 @@ export const useDbStore = defineStore('dbstore', () => {
   }
 
   async function getMovie(id) {
-    const response = await fetch(`https://api.themoviedb.org/3/movie/${id}?language=en-US`, options)
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/${id}?language=en-US&append_to_response=credits,keywords,external_ids,videos,recommendations`,
+      options
+    )
+
     const data = await response.json()
     movie.value = data
     movie.value.backdrop_path =
       'url(' + `https://image.tmdb.org/t/p/w1920_and_h800_multi_faces${data.backdrop_path}` + ')'
+    let arr = new Array()
+    let movieFilterArr = ['Director', 'Screenplay', 'Story', 'Writer', 'Novel']
+    movie.value.credits.crew.map((item) =>
+      movieFilterArr.forEach((filter) =>
+        item.job === filter ? arr.push({ name: item.name, job: item.job }) : ''
+      )
+    )
+    movie.value.color = getRandomColor()
+    movie.value.reduced = CrewFilterByName(arr)
+    movie.value.credits.crew = CrewFilterByDepartment(movie.value.credits.crew)
+    let crewCount = 0
+    for (const obj in movie.value.credits.crew) {
+      crewCount = crewCount + movie.value.credits.crew[obj].length
+      movie.value.credits.crew[obj] = CrewFilterByName(movie.value.credits.crew[obj])
+    }
+    movie.value.credits.crew = sortObjByKeys(movie.value.credits.crew)
+    movie.value.crewCount = crewCount
+    let languageFormat = new Intl.DisplayNames(['en'], { type: 'language' })
+    let currencyFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' })
+    movie.value.revenue !== 0
+      ? (movie.value.revenue = currencyFormatter.format(movie.value.revenue))
+      : (movie.value.revenue = '-')
+    movie.value.budget !== 0
+      ? (movie.value.budget = currencyFormatter.format(movie.value.budget))
+      : (movie.value.budget = '-')
+    movie.value.original_language = languageFormat.of(movie.value.original_language)
+    movie.value.videos = movie.value.videos.results
+    getMedia(id)
+  }
+
+  async function getMedia(id) {
+    const response = await fetch(`https://api.themoviedb.org/3/movie/${id}/images`, options)
+    const data = await response.json()
+    data.backdrops = data.backdrops.sort(compareByVote)
+    data.posters = data.posters.sort(compareByVote)
+
+    movie.value.backdrops = data.backdrops
+
+    movie.value.posters = data.posters
+  }
+
+  function imageURL(size, path) {
+    const baseURL = 'https://image.tmdb.org/t/p/'
+    return baseURL + size + path
   }
 
   return {
+    resetStore,
     movieLists,
     getMovieList,
     trendingLists,
@@ -185,6 +284,8 @@ export const useDbStore = defineStore('dbstore', () => {
     getTVSeriesList,
     getList,
     movie,
-    getMovie
+    getMovie,
+    getMedia,
+    imageURL
   }
 })

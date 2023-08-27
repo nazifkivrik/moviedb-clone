@@ -1,6 +1,6 @@
 <script setup>
 import { toRefs, onMounted, ref, computed } from "vue"
-import buttonGroup from './buttonGroup.vue';
+import buttonGroup from './buttonGroup.vue'
 import carosuel from "./carosuelComp.vue"
 const props = defineProps({ 'buttonNames': Array, 'header': String, 'list': Object })
 const { buttonNames, header, list } = toRefs(props)
@@ -44,23 +44,25 @@ const carosuelArray = computed(() => {
 .ribbon {
     display: flex;
     justify-content: center;
-    width: 100%;
+    align-items: center;
+    flex-direction: column;
 }
 
 .innerRibbon {
     margin-top: 20px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: wrap;
-    width: 85vw;
+    width: max-content;
+
+
 }
 
 
 .header {
-    display: block;
-    width: 100%;
+    display: inline-flex;
     flex-direction: row;
-    align-items: center;
+    width: max-content;
     margin-bottom: 20px;
     height: 50px;
 }
@@ -68,21 +70,7 @@ const carosuelArray = computed(() => {
 .header h1 {
     margin: 0;
     margin-left: 15px;
-    display: inline-block;
-}
+    font-size: 1.7em;
 
-.buttonGroup {
-    display: inline-block;
-}
-
-
-
-
-.carosuel {
-    height: 350px;
-    width: 1000px;
-    display: inline-flex;
-    overflow-x: scroll;
-    overflow-y: hidden;
 }
 </style>

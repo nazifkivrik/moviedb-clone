@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
-const randomNumber = Math.round(Math.random() * 500);
-let randomMovie = ref(null);
-let backgroundImageText = null
+import { onBeforeMount, ref } from 'vue';
+const randomMovie = ref(null)
+let randomNumber = Math.floor(Math.random() * 500);
+
 const options = {
     method: 'GET',
     headers: {
@@ -10,29 +10,34 @@ const options = {
         Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
     }
 };
-async function fetchData() {
-    try {
-        const response = await fetch(`https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${randomNumber}&sort_by=popularity.desc`, options)
-        const data = await response.json()
-        randomMovie.value = data.results[Math.round(Math.random() * 20)]
-        backgroundImageText = 'url(' + `https://image.tmdb.org/t/p/original${randomMovie.value.backdrop_path}` + ')'
-    } catch (error) {
-        console.log(error)
-    }
+
+async function fetchRandom() {
+    const response = await fetch(`https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${randomNumber}&sort_by=popularity.desc`, options)
+    const data = await response.json()
+    randomMovie.value = data.results[Math.round(Math.random() * 20)]
+    randomMovie.value.backdrop_path = 'url(' + `https://image.tmdb.org/t/p/w1920_and_h800_multi_faces${randomMovie.value.backdrop_path}` + ')'
+
 }
 
+
 onBeforeMount(() => {
-    fetchData()
+    fetchRandom()
+
+
+
 })
+
 </script>
 
 <template>
-    <div class="searchSection" v-if="randomMovie" :style="{ 'background-image': backgroundImageText }">
+    <div class="searchSection" :style="{ 'background-image': randomMovie.backdrop_path }" v-if="randomMovie">
         <div class="content">
+            <h1>Welcome.</h1>
             <div class="motto">
-                <h1>Welcome.</h1>
+
                 <h2>Millions of movies,TV shows and people to discover.</h2>
-                <h3>Explore now.</h3>
+
+                <h3><router-link :to="`/movie/${randomMovie.id}`">Explore now.</router-link></h3>
             </div>
 
             <div class="innerSearchInput">
@@ -48,6 +53,7 @@ onBeforeMount(() => {
 <style scoped>
 .searchSection {
     height: 350px;
+    min-width: 750px;
     background-size: cover;
     background-blend-mode: color;
     display: flex;
@@ -64,15 +70,18 @@ onBeforeMount(() => {
 
 .content {
     position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
     height: 350px;
     padding-top: 30px;
 }
 
 .motto {
-    width: 50vw;
+    min-width: 750px;
     display: flex;
-    flex-wrap: wrap;
-    flex-direction: column;
+    flex-wrap: nowrap;
+    flex-direction: row;
     margin-left: 150px;
 }
 
@@ -82,31 +91,41 @@ h3 {
     margin: 0;
 }
 
-.motto h1 {
+h1 {
+    margin-left: 150px;
     font-size: 45px;
+    display: block;
     color: white;
 }
 
 .motto h2 {
-    display: inline;
+    display: inline-flex;
     color: white;
+    width: max-content;
+    align-items: center;
 }
 
-.motto h3 {
+h3 a {
     color: brown;
-    font-size: 40px;
-    display: inline-block;
+    font-size: 30px;
+    display: inline-flex;
+    width: max-content;
     text-decoration: underline;
+    margin: 0;
 }
 
 
+.searchArea {
+    min-width: 700px;
+}
 
 .innerSearchInput {
-    width: 100vw;
+
+
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    margin-left: 150px;
     margin-top: 25px;
+    min-width: 750px;
 
 }
 
@@ -129,7 +148,7 @@ h3 {
     width: 100px;
     height: 48px;
     border-radius: 24px;
-    position: relative;
+    position: absolute;
     z-index: 2;
     margin-left: 47vw;
     border-style: none;

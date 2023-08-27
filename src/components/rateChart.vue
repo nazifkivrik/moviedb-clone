@@ -18,7 +18,7 @@ const progressCircle = computed(() => {
 </script>
 
 <template>
-    <div class="container">
+    <div class="rateChart">
         <div class="circularRate" :style="{ 'background': progressCircle }">
             <span class="rateValue">{{ props.popularity }} <span class="percentage">%</span></span>
         </div>
@@ -26,9 +26,10 @@ const progressCircle = computed(() => {
 </template>
 
 <style scoped>
-.container {
+.rateChart {
     display: inline-flex;
-    width: min-content;
+    height: 100%;
+    width: 100%;
     border-radius: 50%;
     background: white;
     flex-direction: column;
@@ -38,8 +39,8 @@ const progressCircle = computed(() => {
 
 .circularRate {
     position: relative;
-    height: 40px;
-    width: 40px;
+    height: 100%;
+    width: 100%;
     border-radius: 50%;
     background: conic-gradient(#21d07a 3.6deg, #ededed 0deg);
     display: flex;
@@ -50,8 +51,8 @@ const progressCircle = computed(() => {
 .circularRate::before {
     content: '';
     position: absolute;
-    height: 32px;
-    width: 32px;
+    height: 80%;
+    width: 80%;
     border-radius: 50%;
     background-color: black;
 }

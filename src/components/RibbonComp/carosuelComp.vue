@@ -1,63 +1,125 @@
 <script setup>
 import rate from "../rateChart.vue";
-import { toRefs, onMounted, ref } from "vue"
+import { toRefs, watch, ref, onMounted } from "vue"
 const props = defineProps({ 'carosuelArray': Array })
 const { carosuelArray } = toRefs(props)
-const typeOfArray = ref(null)
+const slider = ref(null)
+const renderCount = ref(8)
 function arrayCheck(obj) {
     if ('release_date' in obj) { return 'movie' }
     else if ('first_air_date' in obj) { return 'tv' }
     else return 'person'
 }
-onMounted(() => {
-    typeOfArray.value = arrayCheck(carosuelArray.value[0])
+//lazyload------------
+const throttle = (callback, delay) => {
+    let throttleTimeout = null;
+    let storedEvent = null;
 
+    const throttledEventHandler = (event) => {
+        storedEvent = event;
+
+        const shouldHandleEvent = !throttleTimeout;
+
+        if (shouldHandleEvent) {
+            callback(storedEvent);
+
+            storedEvent = null;
+
+            throttleTimeout = setTimeout(() => {
+                throttleTimeout = null;
+
+                if (storedEvent) {
+                    throttledEventHandler(storedEvent);
+                }
+            }, delay);
+        }
+    };
+
+    return throttledEventHandler;
+};
+let lazyLoad = throttle(function (event) {
+    if (renderCount.value < Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)) {
+        renderCount.value = Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)
+
+    }
+
+}, 250);
+//------------------------
+
+//scroll default position
+watch(carosuelArray, defaultPos)
+function defaultPos() {
+    slider.value.scrollLeft = 0
+    renderCount.value = 8
+}
+//-------------------------
+onMounted(() => {
+    renderCount.value = Math.round((slider.value.offsetWidth + slider.value.scrollLeft) / 150)
 })
 
 </script>
 
 
-<template>
-    <div v-for="( item) in carosuelArray" :key="item" class="card">
-        <div class="imageArea"><router-link :to="`/movie/${item.id}`" v-if="item.release_date"><img
-                    :src="`https://image.tmdb.org/t/p/w154${item.poster_path}`" alt=""></router-link>
-            <router-link :to="`/tv/${item.id}`" v-if="item.first_air_date"><img
-                    :src="`https://image.tmdb.org/t/p/w154${item.poster_path}`" alt=""></router-link>
-            <div class="rate">
-                <rate :popularity="Math.round(item.vote_average * 10)" />
+<template >
+    <div class="carosuel" @scroll="event => lazyLoad(event)" v-if="carosuelArray.length" ref="slider">
+
+        <div v-for="( i, index) in carosuelArray" :key="index" class="card">
+            <div class="imageArea" v-if="index <= renderCount">
+                <router-link :to="`/${arrayCheck(carosuelArray[index])}/${carosuelArray[index].id}`"><img
+                        :src="`https://image.tmdb.org/t/p/w154${carosuelArray[index].poster_path}`" alt=""></router-link>
+
+                <div class="rate">
+                    <rate :popularity="Math.round(carosuelArray[index].vote_average * 10)"
+                        style=" width: 40px; height: 40px;" />
+
+                </div>
             </div>
+
+
+
+            <div class="content">
+
+                <div class="title">
+
+                    <h4 v-if="carosuelArray[index].original_title"><router-link :to="`/movie/${carosuelArray[index].id}`">{{
+                        carosuelArray[index].original_title
+                    }}</router-link></h4>
+                    <h4 v-if="carosuelArray[index].name"><router-link :to="`/tv/${carosuelArray[index].id}`">{{
+                        carosuelArray[index].name }}</router-link></h4>
+                </div>
+                <div class="releaseDate">
+                    <h5 v-if="carosuelArray[index].release_date">{{ new
+                        Date(carosuelArray[index].release_date).toLocaleDateString('en-us', {
+                            month: "short", day: "numeric",
+                            year: "numeric"
+                        }) }}</h5>
+                    <h5 v-if="carosuelArray[index].first_air_date">{{ new
+                        Date(carosuelArray[index].first_air_date).toLocaleDateString('en-us', {
+                            month: "short", day: "numeric",
+                            year: "numeric"
+                        }) }}</h5>
+                </div>
+
+
+            </div>
+
+
         </div>
-
-
-
-        <div class="content">
-
-            <div class="title">
-
-                <h4 v-if="item.original_title"><router-link :to="`/movie/${item.id}`">{{ item.original_title
-                }}</router-link></h4>
-                <h4 v-if="item.name"><router-link :to="`/tv/${item.id}`">{{ item.name }}</router-link></h4>
-            </div>
-            <div class="releaseDate">
-                <h5 v-if="item.release_date">{{ new Date(item.release_date).toLocaleDateString('en-us', {
-                    month: "short", day: "numeric",
-                    year: "numeric"
-                }) }}</h5>
-                <h5 v-if="item.first_air_date">{{ new Date(item.first_air_date).toLocaleDateString('en-us', {
-                    month: "short", day: "numeric",
-                    year: "numeric"
-                }) }}</h5>
-            </div>
-
-
-        </div>
-
 
     </div>
 </template>
 
 
 <style scoped>
+.carosuel {
+    height: 350px;
+    max-width: 1000px;
+    min-width: 800px;
+    display: inline-flex;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
 .card {
     height: 260px;
     margin-left: 11px;
@@ -89,13 +151,11 @@ img {
     text-align: center;
 }
 
-.releaseDate {
-    display: inline-flex;
-}
+
 
 .releaseDate h5 {
     margin: 0;
-    font-weight: 200;
+    font-weight: 300;
 }
 
 
