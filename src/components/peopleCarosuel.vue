@@ -1,107 +1,99 @@
 <script setup>
-const props = defineProps({ 'cast': Array, 'id': Number, 'type': String })
-import { toRefs, ref, onMounted } from 'vue'
-import { useDbStore } from '../stores/dbStore';
-import AppLink from '../components/appLink.vue';
-const store = useDbStore()
-const { cast } = toRefs(props)
-const slider = ref(null)
-const renderCount = ref(null)
-function arrSlice(arr) {
-
-    arr = arr.slice(0, 9); return arr
-}
-//lazy load ----------------
-const throttle = (callback, delay) => {
-    let throttleTimeout = null;
-    let storedEvent = null;
+  const props = defineProps({ cast: Array })
+  import { toRefs, ref, onMounted } from 'vue'
+  import { useDbStore } from '../stores/dbStore'
+  import AppLink from '../components/appLink.vue'
+  const store = useDbStore()
+  const { cast } = toRefs(props)
+  const slider = ref(null)
+  const renderCount = ref(null)
+  function arrSlice(arr) {
+    arr = arr.slice(0, 9)
+    return arr
+  }
+  //lazy load ----------------
+  const throttle = (callback, delay) => {
+    let throttleTimeout = null
+    let storedEvent = null
 
     const throttledEventHandler = (event) => {
-        storedEvent = event;
+      storedEvent = event
 
-        const shouldHandleEvent = !throttleTimeout;
+      const shouldHandleEvent = !throttleTimeout
 
-        if (shouldHandleEvent) {
-            callback(storedEvent);
+      if (shouldHandleEvent) {
+        callback(storedEvent)
 
-            storedEvent = null;
+        storedEvent = null
 
-            throttleTimeout = setTimeout(() => {
-                throttleTimeout = null;
+        throttleTimeout = setTimeout(() => {
+          throttleTimeout = null
 
-                if (storedEvent) {
-                    throttledEventHandler(storedEvent);
-                }
-            }, delay);
-        }
-    };
-
-    return throttledEventHandler;
-};
-let lazyLoad = throttle(function (event) {
-    if (renderCount.value < Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)) {
-        renderCount.value = Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)
-        console.log(slider.value)
+          if (storedEvent) {
+            throttledEventHandler(storedEvent)
+          }
+        }, delay)
+      }
     }
-    console.log(slider.value)
-}, 250);
-//------------------------------
-onMounted(() => {
+
+    return throttledEventHandler
+  }
+  let lazyLoad = throttle(function (event) {
+    if (
+      renderCount.value <
+      Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)
+    ) {
+      renderCount.value = Math.round(
+        (event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150
+      )
+    }
+  }, 250)
+  //------------------------------
+  onMounted(() => {
     renderCount.value = Math.round((slider.value.offsetWidth + slider.value.scrollLeft) / 150)
-})
-
-
-
-
-
-
-
+  })
 </script>
 
-
 <template>
-    <div class="peopleCarosuel">
-        <h2 class="header">Cast</h2>
-        <div class="carosuel" v-if="cast" ref="slider" @scroll="event => lazyLoad(event)">
-            <div class="memberCard" v-for="(member, index) in arrSlice(cast)" :key="index">
-                <div class="image">
-                    <AppLink :to="`/person/${member.id}`"><img
-                            :src="store.imageURL('w138_and_h175_face', member.profile_path)" alt=""
-                            v-if="renderCount >= index"></AppLink>
-                </div>
-                <div class="text">
-                    <div class="name">
-                        <AppLink :to="`/person/${member.id}`">{{ member.original_name }}</AppLink>
-                    </div>
-                    <div class="role">{{ member.character }}</div>
-                </div>
-
-            </div>
-            <div class="showMore" else>
-                <AppLink :to="`/${type}/${id}/cast`">ShowMore</AppLink>
-            </div>
+  <div class="peopleCarosuel">
+    <h2 class="header">{{ $t('Cast') }}</h2>
+    <div class="carosuel" v-if="cast" ref="slider" @scroll="(event) => lazyLoad(event)">
+      <div class="memberCard" v-for="(member, index) in arrSlice(cast)" :key="index">
+        <div class="image">
+          <AppLink :to="`/person/${member.id}`"
+            ><img
+              :src="store.imageURL('w138_and_h175_face', member.profile_path)"
+              alt=""
+              v-if="renderCount >= index"
+          /></AppLink>
         </div>
-
+        <div class="text">
+          <div class="name">
+            <AppLink :to="`/person/${member.id}`">{{ member.original_name }}</AppLink>
+          </div>
+          <div class="role">{{ member.character }}</div>
+        </div>
+      </div>
+      <div class="showMore" else>
+        <AppLink :to="`/${$route.params.type}/${$route.params.id}/cast`">ShowMore</AppLink>
+      </div>
     </div>
+  </div>
 </template>
 
-
 <style scoped>
-.peopleCarosuel {
+  .peopleCarosuel {
     margin: 25px;
     margin-left: 0;
     margin-right: 0;
+  }
 
-}
+  .header {
+    font-size: 1.7em;
+    font-weight: 500;
+  }
 
-
-
-.header {
-    font-size: 2em;
-}
-
-.carosuel {
-
+  .carosuel {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -109,31 +101,32 @@ onMounted(() => {
     overflow-x: scroll;
 
     column-gap: 15px;
+  }
 
-}
+  .memberCard {
+    height: 270px;
+    box-shadow:
+      5px 5px 5px #e3e3e3,
+      -5px -5px 5px #e3e3e3;
+  }
 
-
-
-.memberCard {
-    height: 240px;
-    box-shadow: 5px 5px 5px #e3e3e3;
-}
-
-.image img {
+  .image img {
     border-radius: 5px;
-}
+  }
 
-.name {
-    font-weight: bold;
-}
+  .name {
+    font-weight: 500;
+  }
 
-.text {
+  .text {
     padding: 10px;
     display: flex;
     flex-direction: column;
-}
-
-.showMore {
+  }
+  .role {
+    font-weight: 300;
+  }
+  .showMore {
     font-weight: bold;
-}
+  }
 </style>
