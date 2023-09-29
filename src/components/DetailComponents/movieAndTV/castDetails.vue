@@ -84,6 +84,8 @@
 <style scoped lang="scss">
   @media all and (min-width: 751px) {
     .castAndCrew {
+      margin-left: 15vw;
+
       display: flex;
       flex-direction: row;
       justify-content: space-between;
@@ -95,14 +97,14 @@
       display: flex;
       flex-direction: column;
       width: max-content;
+      margin-left: 5em;
     }
+
     .Crew {
       width: max-content;
     }
   }
-  .castAndCrew {
-    margin-left: 5em;
-  }
+
   .Cast {
     ol {
       padding-inline-start: 0;

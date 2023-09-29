@@ -2,7 +2,7 @@
   import { useDbStore } from '../stores/dbStore'
   import { storeToRefs } from 'pinia'
   import { useRoute } from 'vue-router'
-  import { onBeforeMount, ref } from 'vue'
+  import { onBeforeMount, ref, onMounted, computed, watch } from 'vue'
   import rate from '../components/rateChart.vue'
   const isMobile = ref(window.innerWidth)
   const store = useDbStore()
@@ -32,6 +32,12 @@
       isMovie = false
     }
   })
+  watch(
+    () => shared.value,
+    () => {
+      document.title = shared.value.title || shared.value.name
+    }
+  )
 </script>
 
 <template>
@@ -44,7 +50,7 @@
         <img :src="store.imageURL('w342', shared.poster_path)" alt="" />
         <div class="info">
           <!-- movie -->
-          <h3 class="title" v-if="isMovie">{{ shared.original_title }}</h3>
+          <h3 class="title" v-if="isMovie">{{ shared.title }}</h3>
           <!-- tv -->
           <h3 class="title" v-if="!isMovie">{{ shared.name }}</h3>
           <span class="genres" v-if="isMovie">
@@ -90,9 +96,10 @@
 
   @media all and (min-width: 701px) {
     main {
+      width: 100%;
       .background {
         height: 600px;
-
+        width: 100%;
         background-size: cover;
         background-blend-mode: color;
         display: flex;

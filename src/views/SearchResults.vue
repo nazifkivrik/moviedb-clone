@@ -35,7 +35,6 @@
           options
         )
         const data = await response.json()
-        console.log(data)
         results[type] = data
         break
       }
@@ -47,7 +46,6 @@
           options
         )
         const data = await response.json()
-        console.log(data)
         results[type] = data
         break
       }

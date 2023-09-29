@@ -10,7 +10,7 @@
 
   function getFirstTen(arr) {
     if (arr.length >= 10) return 10
-    else return arr.length - 1
+    else return arr.length
   }
   onMounted(() => {})
 </script>
@@ -46,7 +46,9 @@
     </div>
 
     <div class="mediaContainer">
-      <div class="mostPopular" v-if="selectedSection == 0 && movie.posters && movie.backdrops">
+      <div
+        class="mostPopular"
+        v-if="selectedSection == 0 && movie.posters && movie.backdrops && movie.videos">
         <applink
           :to="{
             path: `/movie/${movie.id}/player`,
@@ -54,7 +56,8 @@
               key: movie.videos[movie.videos.length - 1].key,
               name: movie.videos[movie.videos.length - 1].name
             }
-          }">
+          }"
+          v-if="movie.videos.length > 0">
           <div class="videoPkg">
             <img
               :src="`https://i.ytimg.com/vi/${
@@ -64,15 +67,21 @@
             <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
           </div>
         </applink>
-        <img :src="store.imageURL('w780', movie.backdrops[0].file_path)" alt="" />
-        <img :src="store.imageURL('w500', movie.posters[0].file_path)" alt="" />
+        <img
+          :src="store.imageURL('w780', movie.backdrops[0].file_path)"
+          alt=""
+          v-if="movie.backdrops.length > 0" />
+        <img
+          :src="store.imageURL('w500', movie.posters[0].file_path)"
+          alt=""
+          v-if="movie.posters.length > 0" />
       </div>
-      <div class="videos" v-if="selectedSection == 1">
+      <div class="videos" v-if="selectedSection == 1 && movie.videos">
         <div class="video" v-for="index in getFirstTen(movie.videos)" :key="index">
           <applink
             :to="{
               path: `/movie/${movie.id}/player`,
-              query: { key: movie.videos[index].key, name: movie.videos[index].name }
+              query: { key: movie.videos[index - 1].key, name: movie.videos[index - 1].name }
             }">
             <div class="videoPkg">
               <img
@@ -84,14 +93,14 @@
         </div>
       </div>
 
-      <div class="backdrops" v-if="selectedSection == 2">
+      <div class="backdrops" v-if="selectedSection == 2 && movie.backdrops">
         <div class="backdrop" v-for="index in getFirstTen(movie.backdrops)" :key="index">
-          <img :src="store.imageURL('w500', movie.backdrops[index].file_path)" alt="" />
+          <img :src="store.imageURL('w500', movie.backdrops[index - 1].file_path)" alt="" />
         </div>
       </div>
-      <div class="posters" v-if="selectedSection == 3">
+      <div class="posters" v-if="selectedSection == 3 && movie.posters">
         <div class="poster" v-for="index in getFirstTen(movie.posters)" :key="index">
-          <img :src="store.imageURL('w500', movie.posters[index].file_path)" alt="" />
+          <img :src="store.imageURL('w500', movie.posters[index - 1].file_path)" alt="" />
         </div>
       </div>
     </div>

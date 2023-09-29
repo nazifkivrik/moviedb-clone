@@ -13,19 +13,21 @@
 </script>
 
 <template>
-  <div class="search"><search /></div>
-  <section class="ribbons">
-    <ribbonComp
-      :button-names="[t('Today'), t('This Week')]"
-      :header="t('Trending')"
-      :list="store.trendingLists.All"
-      class="ribbon" />
-    <ribbonComp
-      :button-names="[t('Streaming'), t('Popular'), t('Top Rated'), t('Up Coming')]"
-      :header="'Movies'"
-      :list="store.movieLists"
-      class="ribbon" />
-  </section>
+  <main>
+    <div class="search"><search /></div>
+    <section class="ribbons">
+      <ribbonComp
+        :button-names="[t('Today'), t('This Week')]"
+        :header="t('Trending')"
+        :list="store.trendingLists.All"
+        class="ribbon" />
+      <ribbonComp
+        :button-names="[t('Streaming'), t('Popular'), t('Top Rated'), t('Up Coming')]"
+        :header="'Movies'"
+        :list="store.movieLists"
+        class="ribbon" />
+    </section>
+  </main>
 </template>
 <style scoped>
   @media all and (min-width: 330px) {
@@ -51,8 +53,15 @@
   @media all and (min-width: 990px) {
     .ribbon {
       width: 990px;
+      height: 500px;
     }
   }
+  main {
+    display: flex;
+    flex-direction: column;
+    row-gap: 40px;
+  }
+
   .search {
     width: 100%;
   }
@@ -61,5 +70,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    row-gap: 50px;
   }
 </style>

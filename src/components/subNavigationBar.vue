@@ -240,8 +240,8 @@
 
   .videoTypes {
     position: absolute;
-    left: 7em;
-    top: 40px;
+    left: 10em;
+    top: 20px;
   }
 
   .Menus {

@@ -40,7 +40,7 @@
         :style="{ 'background-image': shared.backdrop_path, '--bgColor': shared.color }">
         <div class="container">
           <span class="image">
-            <img :src="store.imageURL('w92', shared.poster_path)" alt="" />
+            <img :src="store.imageURL('w116_and_h174_face', shared.poster_path)" alt="" />
           </span>
           <div class="info">
             <!-- movie -->
@@ -127,6 +127,7 @@
             width: 100%;
             align-items: flex-start;
             img {
+              width: 92px;
               margin-top: 1.3em;
               border-radius: 10px;
             }

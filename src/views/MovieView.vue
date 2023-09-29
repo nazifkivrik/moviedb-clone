@@ -76,17 +76,6 @@
         font-weight: bold;
         margin-left: 25px;
       }
-      .player {
-        width: 100vw;
-        height: 100vh;
-        z-index: 1000;
-        position: fixed;
-        top: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: rgba(127, 127, 127, 0.95);
-      }
     }
   }
   @media all and (max-width: 700px) {
@@ -105,5 +94,16 @@
         }
       }
     }
+  }
+  .player {
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(127, 127, 127, 0.95);
   }
 </style>

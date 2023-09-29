@@ -64,8 +64,12 @@
             ><img
               :src="store.imageURL('w138_and_h175_face', member.profile_path)"
               alt=""
-              v-if="renderCount >= index"
-          /></AppLink>
+              v-if="renderCount >= index && member.profile_path" />
+            <img
+              src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg"
+              alt=""
+              v-else-if="!member.profile_path" />
+          </AppLink>
         </div>
         <div class="text">
           <div class="name">
@@ -104,13 +108,15 @@
   }
 
   .memberCard {
-    height: 270px;
+    height: 330px;
     box-shadow:
       5px 5px 5px #e3e3e3,
       -5px -5px 5px #e3e3e3;
   }
 
   .image img {
+    width: 138px;
+    height: 175px;
     border-radius: 5px;
   }
 

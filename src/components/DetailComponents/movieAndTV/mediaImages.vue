@@ -129,7 +129,7 @@
               <template v-for="poster in posters" :key="poster">
                 <div class="card">
                   <app-link :to="store.imageURL('original', poster.file_path)"
-                    ><img :src="store.imageURL('w185', poster.file_path)" alt=""
+                    ><img :src="store.imageURL('w300', poster.file_path)" alt=""
                   /></app-link>
                   <div class="section">
                     <span style="font-weight: 300">Size</span>
@@ -189,7 +189,7 @@
       flex-direction: row;
     }
     .backdropSum {
-      margin-left: 40px;
+      margin-left: 10vw;
       margin-top: 30px;
       width: 210px;
       position: relative;

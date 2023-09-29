@@ -71,8 +71,18 @@
     ref="slider">
     <div v-for="(i, index) in carosuelArray" :key="index" class="card">
       <div class="imageArea" v-if="index <= renderCount">
-        <router-link :to="`/${arrayCheck(carosuelArray[index])}/${carosuelArray[index].id}`"
-          ><img :src="`https://image.tmdb.org/t/p/w154${carosuelArray[index].poster_path}`" alt=""
+        <router-link
+          :to="{
+            name: 'media',
+            params: {
+              type: arrayCheck(carosuelArray[index]),
+              id: carosuelArray[index].id
+            }
+          }"
+          ><img
+            :src="`https://image.tmdb.org/t/p/w220_and_h330_face${carosuelArray[index].poster_path}`"
+            alt=""
+            loading="lazy"
         /></router-link>
 
         <rate :popularity="Math.round(carosuelArray[index].vote_average * 10)" class="rate" />
@@ -80,15 +90,29 @@
 
       <div class="content">
         <div class="title">
-          <h4 v-if="carosuelArray[index].original_title">
-            <router-link :to="`/movie/${carosuelArray[index].id}`">{{
-              carosuelArray[index].original_title
-            }}</router-link>
+          <h4 v-if="carosuelArray[index].title">
+            <router-link
+              :to="{
+                name: 'media',
+                params: {
+                  type: 'movie',
+                  id: carosuelArray[index].id
+                }
+              }"
+              >{{ carosuelArray[index].title }}</router-link
+            >
           </h4>
           <h4 v-if="carosuelArray[index].name">
-            <router-link :to="`/tv/${carosuelArray[index].id}`">{{
-              carosuelArray[index].name
-            }}</router-link>
+            <router-link
+              :to="{
+                name: 'media',
+                params: {
+                  type: 'tv',
+                  id: carosuelArray[index].id
+                }
+              }"
+              >{{ carosuelArray[index].name }}</router-link
+            >
           </h4>
         </div>
         <div class="releaseDate">
@@ -117,7 +141,7 @@
 </template>
 
 <style scoped>
-  @media all and (max-width: 800px) {
+  @media all and (max-width: 750px) {
     .carosuel {
       height: 30em;
     }
@@ -127,9 +151,9 @@
       height: 3.4em;
     }
   }
-  @media all and (min-width: 800px) {
+  @media all and (min-width: 751px) {
     .carosuel {
-      height: 20em;
+      height: 23em;
     }
     .rate {
       width: 2.2em;

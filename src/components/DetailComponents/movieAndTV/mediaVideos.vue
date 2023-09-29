@@ -150,56 +150,106 @@
     </div>
   </template>
 </template>
-<style scoped>
+<style scoped lang="scss">
+  $color_1: white;
+  $color_2: black;
+  $background-color_1: #ebebeb;
+  $background-color_2: antiquewhite;
+  $background-color_3: rgba(187, 182, 182, 0.1);
+  $background-color_4: rgba(127, 127, 127, 0.95);
+  @media all and (max-width: 750px) {
+    .videoSide {
+      display: flex;
+      flex-direction: column;
+      .videoSum {
+        h2 {
+          color: white;
+          position: relative;
+          font-size: 1.7em;
+          margin: 0;
+          padding: 5px 20px;
+          display: flex;
+          align-items: center;
+          .videoCount {
+            position: absolute;
+            font-weight: 300;
+            right: 30px;
+          }
+        }
+        ul {
+          list-style: none;
+          padding-inline-start: 0;
+          display: flex;
+          flex-direction: row;
+          overflow-x: scroll;
+          column-gap: 0.8em;
+          box-shadow:
+            5px 5px 5px 0 rgba(0, 0, 0, 0.1),
+            -5px -5px 5px 0 rgba(0, 0, 0, 0.1);
+          .videoCount {
+            position: absolute;
+            font-weight: 300;
+            right: 0;
+          }
+
+          li {
+            position: relative;
+            padding: 5px 15px;
+            height: 1.2em;
+            box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, 0.1);
+          }
+          &::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+  @media all and (min-width: 751px) {
+    .videoSide {
+      display: flex;
+      flex-direction: row;
+    }
+    .videoSum {
+      margin-left: 40px;
+      margin-top: 30px;
+      width: 210px;
+      position: relative;
+      h2 {
+        width: 210px;
+        padding: 12px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        color: $color_1;
+        font-weight: 500;
+        font-size: 1.3em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+      }
+      ul {
+        list-style: none;
+        padding-inline-start: 0;
+        padding-left: 12px;
+        width: 210px;
+      }
+      li {
+        margin-bottom: 15px;
+        font-weight: 400;
+        cursor: pointer;
+      }
+    }
+    .videoCount {
+      position: absolute;
+      right: 0;
+      font-weight: 300;
+    }
+  }
   .selectedClass {
     font-size: 1.1em;
     font-weight: 600;
-    background-color: #ebebeb;
+    background-color: $background-color_1;
     padding: 8px;
-  }
-
-  .videoSide {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .videoSum {
-    margin-left: 40px;
-    margin-top: 30px;
-    width: 210px;
-    position: relative;
-  }
-
-  .videoSum h2 {
-    width: 210px;
-    padding: 12px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    color: white;
-    font-weight: 500;
-    font-size: 1.3em;
-    margin: 0;
-    display: flex;
-    align-items: center;
-  }
-
-  .videoSum ul {
-    list-style: none;
-    padding-inline-start: 0;
-    padding-left: 12px;
-    width: 210px;
-  }
-
-  .videoSum li {
-    margin-bottom: 15px;
-    font-weight: 400;
-    cursor: pointer;
-  }
-
-  .videoCount {
-    position: absolute;
-    right: 0;
-    font-weight: 300;
   }
 
   .videoPkg {
@@ -208,104 +258,91 @@
     justify-content: center;
     position: relative;
   }
-
   .videoDetails {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     padding-left: 40px;
     padding-top: 20px;
+    h4 {
+      margin-left: 15px;
+      margin-top: 20px;
+      margin-bottom: 2px;
+    }
   }
-
-  .details p {
-    margin: 0;
-    width: max-content;
-    display: inline;
+  .details {
+    p {
+      margin: 0;
+      width: max-content;
+      display: inline;
+    }
+    div {
+      margin-bottom: 5px;
+      margin-left: 15px;
+      font-size: 0.8em;
+      font-weight: 300;
+    }
+    position: relative;
   }
-
-  .details div {
-    margin-bottom: 5px;
-    margin-left: 15px;
-    font-size: 0.8em;
-    font-weight: 300;
-  }
-
   .description {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted black;
     cursor: pointer;
+    .tooltip {
+      visibility: hidden;
+      width: 400px;
+      background-color: $background-color_2;
+      color: $color_2;
+      text-align: center;
+      padding: 5px 0;
+      border-radius: 6px;
+      position: absolute;
+      z-index: 1;
+    }
+    &:hover {
+      .tooltip {
+        visibility: visible;
+      }
+    }
   }
-
-  .description .tooltip {
-    visibility: hidden;
-    width: 400px;
-    background-color: antiquewhite;
-    color: black;
-    text-align: center;
-    padding: 5px 0;
-    border-radius: 6px;
-
-    position: absolute;
-    z-index: 1;
-  }
-
-  .description:hover .tooltip {
-    visibility: visible;
-  }
-
-  .details {
-    position: relative;
-  }
-
   .channel {
     position: absolute;
     bottom: 0;
   }
-
-  .videoDetails h4 {
-    margin-left: 15px;
-    margin-top: 20px;
-    margin-bottom: 2px;
-  }
-
   img {
     width: 300px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
   }
-
   .play {
     position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: $color_1;
     z-index: 100;
+    &:hover {
+      color: $color_2;
+    }
+    &:before {
+      content: '';
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: $background-color_3;
+    }
   }
-
-  .play:hover {
-    color: black;
-  }
-
-  .play:before {
-    content: '';
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: rgba(187, 182, 182, 0.1);
-  }
-
   .player {
     width: 100vw;
     height: 100vh;
     z-index: 1000;
-    position: fixed;
+    position: absolute;
     top: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(127, 127, 127, 0.95);
+    background-color: $background-color_4;
   }
 </style>

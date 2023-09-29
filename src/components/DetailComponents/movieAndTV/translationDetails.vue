@@ -118,6 +118,11 @@
           display: flex;
           flex-direction: row;
           overflow-x: scroll;
+          column-gap: 0.8em;
+          box-shadow:
+            5px 5px 5px 0 rgba(0, 0, 0, 0.1),
+            -5px -5px 5px 0 rgba(0, 0, 0, 0.1);
+
           .translationCount {
             position: absolute;
             font-weight: 300;
@@ -126,11 +131,13 @@
 
           li {
             position: relative;
-            text-wrap: nowrap;
-            padding-right: 30px;
-            margin-right: 2px;
-            border-right: solid;
-            height: 1.1em;
+            padding: 5px 35px 5px 0;
+
+            height: 1.2em;
+            box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, 0.1);
+          }
+          &::-webkit-scrollbar {
+            display: none;
           }
         }
       }
@@ -145,7 +152,7 @@
       flex-direction: row;
     }
     .translationSum {
-      margin-left: 40px;
+      margin-left: 10vw;
       margin-top: 30px;
       width: 210px;
       position: relative;
@@ -188,6 +195,7 @@
   }
   table {
     text-align: left;
+    width: calc(100% - 350px);
     margin: 20px;
     border-radius: 10px;
     box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.1);

@@ -7,6 +7,7 @@
     return window.innerWidth
   })
   const toggle = ref(false)
+  let query = 'now-playing'
 </script>
 
 <template>
@@ -16,10 +17,59 @@
         <appLink to="/">TMDB-C</appLink>
       </div>
       <nav>
-        <h1>{{ $t('Movies') }}</h1>
-        <h1>{{ $t('TV Shows') }}</h1>
-        <h1>{{ $t('People') }}</h1>
-        <h1>{{ $t('More') }}</h1>
+        <ul>
+          <li>
+            <h1>{{ $t('Movies') }}</h1>
+            <ul>
+              <li>
+                <app-link :to="{ path: '/movie', query: { query: 'popular' } }">{{
+                  $t('Popular')
+                }}</app-link>
+              </li>
+              <li>
+                <app-link :to="{ path: '/movie', query: { query: 'now-playing' } }">{{
+                  $t('Now Playing')
+                }}</app-link>
+              </li>
+              <li>
+                <app-link :to="{ path: '/movie', query: { query: 'upcoming' } }">{{
+                  $t('Upcoming')
+                }}</app-link>
+              </li>
+              <li>
+                <app-link :to="{ path: '/movie', query: { query: 'top-rated' } }">{{
+                  $t('Top Rated')
+                }}</app-link>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <h1>{{ $t('TV Shows') }}</h1>
+            <ul>
+              <app-link :to="{ path: '/tv', query: { query: 'popular' } }">{{
+                $t('Popular')
+              }}</app-link>
+              <app-link :to="{ path: '/tv', query: { query: 'airing-today' } }">{{
+                $t('Airing Today')
+              }}</app-link>
+              <app-link :to="{ path: '/tv', query: { query: 'on-the-air' } }">{{
+                $t('On TV')
+              }}</app-link>
+              <app-link :to="{ path: '/tv', query: { query: 'top-rated' } }">{{
+                $t('Top Rated')
+              }}</app-link>
+            </ul>
+          </li>
+          <li>
+            <h1>{{ $t('People') }}</h1>
+            <ul>
+              <li>{{ $t('Popular People') }}</li>
+            </ul>
+          </li>
+          <li>
+            <h1>{{ $t('More') }}</h1>
+          </li>
+        </ul>
       </nav>
     </div>
     <div class="othermenus" v-if="isMobile > 800">
@@ -67,7 +117,7 @@
     background-color: #032541;
     color: white;
     position: relative;
-    z-index: 5;
+    z-index: 500;
     width: 100%;
     height: 3.5em;
     position: sticky;
@@ -88,11 +138,51 @@
       }
       nav {
         padding-left: 25px;
+        display: flex;
+        flex-direction: row;
+        width: max-content;
+        ul {
+          list-style: none;
+          padding-inline-start: 0;
+        }
+        li {
+          cursor: pointer;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+        > ul {
+          display: flex;
+          column-gap: 20px;
+
+          > li {
+            height: 1.1em;
+            overflow: hidden;
+            position: relative;
+
+            &:hover {
+              overflow: visible;
+            }
+            > ul {
+              position: absolute;
+              background-color: white;
+              z-index: 1000;
+              color: black;
+              display: flex;
+              flex-direction: column;
+              padding-top: 8px;
+              padding: 1em;
+              row-gap: 5px;
+              border-radius: 5px;
+              width: max-content;
+            }
+          }
+        }
         h1 {
           display: inline-flex;
           font-weight: 500;
+          margin: 0;
           font-size: 1em;
-          margin-left: 10px;
         }
       }
     }

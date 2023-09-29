@@ -5,6 +5,8 @@ import App from './App.vue'
 import router from './router'
 import appLink from './components/appLink.vue'
 import i18n from './locales/i18n'
+import { vClickOutside } from '@/directives/vClickOutside.js'
+
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCircleXmark, faCirclePlay, faUser } from '@fortawesome/free-regular-svg-icons'
@@ -17,7 +19,13 @@ import {
   faCaretRight,
   faCaretDown,
   faStar,
-  faBars
+  faBars,
+  faAngleRight,
+  faAngleDown,
+  faMagnifyingGlass,
+  faXmark,
+  faCheck,
+  faAnglesUp
 } from '@fortawesome/free-solid-svg-icons'
 import { faFacebook, faImdb, faInstagram, faTwitter } from '@fortawesome/free-brands-svg-icons'
 library.add(
@@ -36,7 +44,13 @@ library.add(
   faCaretDown,
   faStar,
   faBars,
-  faUser
+  faUser,
+  faAngleRight,
+  faAngleDown,
+  faMagnifyingGlass,
+  faXmark,
+  faCheck,
+  faAnglesUp
 )
 const options = {
   method: 'GET',
@@ -48,11 +62,11 @@ const options = {
 }
 
 const app = createApp(App)
-
 app.component('AppLink', appLink)
 app.component('icon-lib', FontAwesomeIcon)
 app.use(createPinia())
 app.use(i18n)
 app.use(router)
+app.directive('clickOutside', vClickOutside)
 app.provide('fetchOptions', options)
 app.mount('#app')

@@ -12,21 +12,36 @@ import videos from '../components/DetailComponents/movieAndTV/mediaVideos.vue'
 import episodeGroups from '@/components/DetailComponents/movieAndTV/episodeGroups.vue'
 import tvSeasons from '@/components/DetailComponents/movieAndTV/tvSeasons.vue'
 import group from '@/components/DetailComponents/movieAndTV/episodeGroupDetail.vue'
+import discoverMovie from '@/views/DiscoverMovie.vue'
+import discoverTV from '@/views/DiscoverTVShows.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: { title: 'TMDB-C' }
     },
     {
       path: '/search',
       name: 'searchResults',
-      component: searchResults
+      component: searchResults,
+      meta: { title: 'Search Results' }
+    },
+    {
+      path: '/movie',
+      component: discoverMovie,
+      meta: { title: 'Discover' }
+    },
+    {
+      path: '/tv',
+      component: discoverTV,
+      meta: { title: 'Discover' }
     },
     {
       path: '/:type/:id',
+      name: 'media',
       component: ViewContainer,
       children: [{ path: 'player', component: videoPlayer }]
     },
@@ -79,5 +94,9 @@ const router = createRouter({
     }
   ]
 })
-
+router.beforeEach((to, from) => {
+  if (to.meta.title) {
+    document.title = to.meta.title
+  }
+})
 export default router

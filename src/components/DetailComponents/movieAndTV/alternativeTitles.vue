@@ -160,6 +160,11 @@
           display: flex;
           flex-direction: row;
           overflow-x: scroll;
+          column-gap: 0.8em;
+          box-shadow:
+            5px 5px 5px 0 rgba(0, 0, 0, 0.1),
+            -5px -5px 5px 0 rgba(0, 0, 0, 0.1);
+
           .titleCount {
             position: absolute;
             font-weight: 300;
@@ -169,8 +174,12 @@
           li {
             position: relative;
             text-wrap: nowrap;
-            padding: 0 15px;
-            height: 1em;
+            padding: 5px 15px;
+            height: 1.2em;
+            box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, 0.1);
+          }
+          &::-webkit-scrollbar {
+            display: none;
           }
         }
       }
@@ -186,6 +195,9 @@
       width: max-content;
       text-align: left;
       margin: 20px;
+      box-shadow:
+        5px 5px 5px 0 rgba(0, 0, 0, 0.1),
+        -5px -5px 5px 0 rgba(0, 0, 0, 0.1);
     }
     .country {
       display: flex;

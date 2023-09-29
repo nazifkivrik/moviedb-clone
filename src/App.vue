@@ -10,7 +10,7 @@
   </body>
 </template>
 
-<style>
+<style lang="scss">
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap');
 
   @media all and (max-width: 600px) {
@@ -35,9 +35,10 @@
   }
   @media all and (min-width: 1200px) {
     * {
-      font-size: 16px;
+      font-size: 19px;
     }
   }
+
   a {
     text-decoration: none;
     color: black;
@@ -49,6 +50,7 @@
 
   * {
     font-family: 'Roboto', sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
