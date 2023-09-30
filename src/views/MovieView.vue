@@ -1,13 +1,13 @@
 <script setup>
-  import subNav from '../components/subNavigationBar.vue'
-  import peopleCarosuel from '../components/peopleCarosuel.vue'
-  import mediaCarosuel from '../components/mediaCarosuel.vue'
-  import movieViewBanner from '../components/movieViewBanner.vue'
   import movieViewDetailed from '@/components/movieViewDetailedInfo.vue'
-  import { useDbStore } from '../stores/dbStore'
   import { storeToRefs } from 'pinia'
   import { useRoute } from 'vue-router'
   import AppLink from '../components/appLink.vue'
+  import mediaCarosuel from '../components/mediaCarosuel.vue'
+  import movieViewBanner from '../components/movieViewBanner.vue'
+  import peopleCarosuel from '../components/peopleCarosuel.vue'
+  import subNav from '../components/subNavigationBar.vue'
+  import { useDbStore } from '../stores/dbStore'
   const store = useDbStore()
   const { shared } = storeToRefs(store)
 
@@ -28,7 +28,7 @@
             $t('Full Cast&Crew')
           }}</AppLink>
         </div>
-        <mediaCarosuel :movie="shared" />
+        <mediaCarosuel />
       </div>
       <movieViewDetailed class="greyCol" />
     </div>

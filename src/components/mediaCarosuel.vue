@@ -1,10 +1,9 @@
 <script setup>
   import { toRefs, ref, onMounted } from 'vue'
-  import { useDbStore } from '../stores/dbStore'
-  import applink from './appLink.vue'
+  import { useDbStore } from '@/stores/dbStore'
+  import applink from '@/components/appLink.vue'
   const store = useDbStore()
-  const props = defineProps({ movie: Object })
-  const { movie } = toRefs(props)
+  const { shared } = toRefs(store)
   const selectedSection = ref(0)
   const headArray = ['Most Popular', 'Videos', 'Backdrops', 'Posters']
 
@@ -16,7 +15,7 @@
 </script>
 
 <template>
-  <div class="mediaSection" v-if="movie !== undefined">
+  <div class="mediaSection" v-if="shared">
     <div class="mediaMenus">
       <div class="mediaHeader">{{ $t('Media') }}</div>
       <div v-for="(head, index) in headArray" :key="index">
@@ -26,12 +25,12 @@
           :value="$t(headArray[index])"
           @click="(event) => (selectedSection = index)"
           class="mediaHeaderItem" />
-        <div class="count" v-if="index == 1">{{ movie.videos.length }}</div>
-        <div class="count" v-if="index == 2 && movie.backdrops">
-          {{ movie.backdrops.length }}
+        <div class="count" v-if="index == 1 && shared.videos">{{ shared.videos.length }}</div>
+        <div class="count" v-if="index == 2 && shared.backdrops">
+          {{ shared.backdrops.length }}
         </div>
-        <div class="count" v-if="index == 3 && movie.backdrops">
-          {{ movie.posters.length }}
+        <div class="count" v-if="index == 3 && shared.posters">
+          {{ shared.posters.length }}
         </div>
       </div>
 
@@ -48,44 +47,44 @@
     <div class="mediaContainer">
       <div
         class="mostPopular"
-        v-if="selectedSection == 0 && movie.posters && movie.backdrops && movie.videos">
+        v-if="selectedSection == 0 && shared.posters && shared.backdrops && shared.videos">
         <applink
           :to="{
-            path: `/movie/${movie.id}/player`,
+            path: `/movie/${shared.id}/player`,
             query: {
-              key: movie.videos[movie.videos.length - 1].key,
-              name: movie.videos[movie.videos.length - 1].name
+              key: shared.videos[shared.videos.length - 1].key,
+              name: shared.videos[shared.videos.length - 1].name
             }
           }"
-          v-if="movie.videos.length > 0">
+          v-if="shared.videos.length > 0">
           <div class="videoPkg">
             <img
               :src="`https://i.ytimg.com/vi/${
-                movie.videos[movie.videos.length - 1].key
+                shared.videos[shared.videos.length - 1].key
               }/maxresdefault.jpg`"
               alt="" />
             <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
           </div>
         </applink>
         <img
-          :src="store.imageURL('w780', movie.backdrops[0].file_path)"
+          :src="store.imageURL('w780', shared.backdrops[0].file_path)"
           alt=""
-          v-if="movie.backdrops.length > 0" />
+          v-if="shared.backdrops.length > 0" />
         <img
-          :src="store.imageURL('w500', movie.posters[0].file_path)"
+          :src="store.imageURL('w500', shared.posters[0].file_path)"
           alt=""
-          v-if="movie.posters.length > 0" />
+          v-if="shared.posters.length > 0" />
       </div>
-      <div class="videos" v-if="selectedSection == 1 && movie.videos">
-        <div class="video" v-for="index in getFirstTen(movie.videos)" :key="index">
+      <div class="videos" v-if="selectedSection == 1 && shared.videos">
+        <div class="video" v-for="index in getFirstTen(shared.videos)" :key="index">
           <applink
             :to="{
-              path: `/movie/${movie.id}/player`,
-              query: { key: movie.videos[index - 1].key, name: movie.videos[index - 1].name }
+              path: `/movie/${shared.id}/player`,
+              query: { key: shared.videos[index - 1].key, name: shared.videos[index - 1].name }
             }">
             <div class="videoPkg">
               <img
-                :src="`https://i.ytimg.com/vi/${movie.videos[index].key}/maxresdefault.jpg`"
+                :src="`https://i.ytimg.com/vi/${shared.videos[index - 1].key}/maxresdefault.jpg`"
                 alt="" />
               <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
             </div>
@@ -93,14 +92,14 @@
         </div>
       </div>
 
-      <div class="backdrops" v-if="selectedSection == 2 && movie.backdrops">
-        <div class="backdrop" v-for="index in getFirstTen(movie.backdrops)" :key="index">
-          <img :src="store.imageURL('w500', movie.backdrops[index - 1].file_path)" alt="" />
+      <div class="backdrops" v-if="selectedSection == 2 && shared.backdrops">
+        <div class="backdrop" v-for="index in getFirstTen(shared.backdrops)" :key="index">
+          <img :src="store.imageURL('w500', shared.backdrops[index - 1].file_path)" alt="" />
         </div>
       </div>
-      <div class="posters" v-if="selectedSection == 3 && movie.posters">
-        <div class="poster" v-for="index in getFirstTen(movie.posters)" :key="index">
-          <img :src="store.imageURL('w500', movie.posters[index - 1].file_path)" alt="" />
+      <div class="posters" v-if="selectedSection == 3 && shared.posters">
+        <div class="poster" v-for="index in getFirstTen(shared.posters)" :key="index">
+          <img :src="store.imageURL('w500', shared.posters[index - 1].file_path)" alt="" />
         </div>
       </div>
     </div>

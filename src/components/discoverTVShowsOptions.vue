@@ -8,6 +8,7 @@
   const store = useDbStore()
   const route = useRoute()
   const emits = defineEmits(['discover'])
+  const countries = ref()
   const sortOptions = [
     { en: 'Popularity Descending', text: 'popularity.desc' },
     { en: 'Popularity Ascending', text: 'popularity.asc' },
@@ -18,7 +19,7 @@
     { en: 'Revenue Ascending', text: 'revenue.asc' },
     { en: 'Revenue Descending', text: 'revenue.desc' }
   ]
-
+  const availabilities = ['Stream', 'Free', 'Ads', 'Rent', 'Buy']
   const collapseSort = ref(true)
   const collapseWatch = ref(true)
   const collapseFilters = ref(false)
@@ -32,68 +33,63 @@
     SortOpt: { en: 'Popularity Descending', text: 'popularity.desc' },
     Region: { english_name: 'Turkey', iso_3166_1: 'TR' },
     searchAllEpisodes: searchAllEpisodes.value,
-    MinimumUserVotes: computed(() => {
-      if (route.query) {
-        if (route.query.query === 'top-rated') {
-          return 300
-        } else return 0
-      } else return 0
-    }),
+    searchAllAvailabilities: false,
+    Availabilities: ['Stream', 'Free', 'Ads', 'Rent', 'Buy'],
+    MinimumUserVotes: 0,
     UserScore: { min: 0, max: 10 },
     Runtime: { min: 0, max: 400 },
-    DateFrom: computed(() => {
-      if (route.query) {
-        switch (route.query.query) {
-          case 'airing-today': {
-            let date = new Date()
-            return date.toISOString().split('T')[0]
-          }
-          case 'on-the-air': {
-            let date = new Date()
-            return date.toISOString().split('T')[0]
-          }
-          default:
-            return ''
-        }
-      } else return ''
-    }),
-    DateTo: computed(() => {
-      if (route.query) {
-        switch (route.query.query) {
-          case 'popular': {
-            let date = new Date()
-            date.setHours(0, 0, 0, 0)
-            date.setMonth(date.getMonth() + 5)
-
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'airing-today': {
-            let date = new Date()
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'on-the-air': {
-            let date = new Date()
-
-            date.setDate(date.getDate() + 7)
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'top-rated': {
-            let date = new Date()
-            date.setMonth(date.getMonth() + 5)
-            return date.toISOString().split('T')[0]
-          }
-          default:
-            return ''
-        }
-      } else return ''
-    }),
+    DateFrom: '',
+    DateTo: '',
     Genres: [],
     Language: { english_name: 'None Selected', iso_3166_1: '' },
     WatchProviders: []
   })
+  async function initialOptions(obj) {
+    let lang = navigator.language
+    getAvailableRegions(lang)
+    getGenres(lang)
+    await getCountries(lang)
+    await getWatchProviders(lang, lang.split('-')[1])
+    countries.value.forEach((item) => {
+      if (item.iso_3166_1 === lang.split('-')[1]) {
+        obj.Region = item
+      }
+    })
+    switch (route.query.query) {
+      case 'popular': {
+        let dateTo = new Date()
+        dateTo.setHours(0, 0, 0, 0)
+        dateTo.setMonth(dateTo.getMonth() + 5)
+
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        break
+      }
+      case 'top-rated': {
+        obj.MinimumUserVotes = 300
+        let dateTo = new Date()
+        dateTo.setMonth(dateTo.getMonth() + 5)
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        break
+      }
+      case 'airing-today': {
+        let dateFrom = new Date()
+        obj.DateFrom = dateFrom.toISOString().split('T')[0]
+        let dateTo = new Date()
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        break
+      }
+      case 'on-the-air': {
+        let dateFrom = new Date()
+        obj.DateFrom = dateFrom.toISOString().split('T')[0]
+        let dateTo = new Date()
+
+        dateTo.setDate(dateTo.getDate() + 7)
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        break
+      }
+    }
+    emits('discover', discoverOptions)
+  }
   const optionsChanged = ref(false)
   watch(
     () => [{ ...discoverOptions }],
@@ -103,6 +99,14 @@
   function closeList(e, array) {
     e.className = 'passive'
     array.length = 0
+  }
+  async function getCountries(language) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/configuration/countries?language=${language}`,
+      options
+    )
+    const data = await res.json()
+    countries.value = data
   }
   //#region Companies
   const searchedCompanies = ref([])
@@ -183,6 +187,13 @@
     discoverOptions.Language.english_name = set.english_name
     discoverOptions.Language.iso_3166_1 = set.iso_639_1
     event.target.parentElement.classList.toggle('collapse')
+  }
+  function setSelectedAvailabilities(release) {
+    if (!discoverOptions.Availabilities.includes(release)) {
+      discoverOptions.Availabilities.push(release)
+    } else {
+      discoverOptions.Availabilities.splice(discoverOptions.Availabilities.indexOf(release), 1)
+    }
   }
   //#endregion
   //#region Regions
@@ -299,13 +310,10 @@
   }, 150)
   //#endregion
   onBeforeMount(() => {
-    getAvailableRegions('en-US')
-    getWatchProviders('en-US', 'TR')
-    getGenres('en-US')
     getLanguages()
 
+    initialOptions(discoverOptions)
     filteredRegions.value = availableRegions.value
-    emits('discover', discoverOptions)
   })
 </script>
 
@@ -385,6 +393,25 @@
         </h2>
 
         <ul v-if="collapseFilters">
+          <li>
+            <h4>Availabilities</h4>
+            <input
+              type="checkbox"
+              id="searchAllAvailabilities"
+              v-model="discoverOptions.searchAllAvailabilities"
+              @change="(e) => (e.target.checked ? (discoverOptions.Availabilities = []) : '')" />
+            <label for="searchAllAvailabilities">Search all availabilities?</label>
+            <template v-if="!discoverOptions.searchAllAvailabilities">
+              <div v-for="item in availabilities" :key="item">
+                <input
+                  type="checkbox"
+                  :id="item"
+                  @change="setSelectedAvailabilities(item)"
+                  :checked="discoverOptions.Availabilities.includes(item)" />
+                <label :for="item">{{ item }}</label>
+              </div>
+            </template>
+          </li>
           <li class="airDates">
             <h4>Air Dates</h4>
             <div>

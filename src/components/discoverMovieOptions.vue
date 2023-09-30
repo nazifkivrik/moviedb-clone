@@ -8,6 +8,7 @@
   const store = useDbStore()
   const route = useRoute()
   const emits = defineEmits(['discover'])
+
   const sortOptions = [
     { en: 'Popularity Descending', text: 'popularity.desc' },
     { en: 'Popularity Ascending', text: 'popularity.asc' },
@@ -26,6 +27,7 @@
     Physical: 5,
     TV: 6
   }
+  const availabilities = ['Stream', 'Free', 'Ads', 'Rent', 'Buy']
 
   const collapseSort = ref(true)
   const collapseWatch = ref(true)
@@ -40,86 +42,17 @@
     Region: { english_name: 'Turkey', iso_3166_1: 'TR' },
     SearchAllCountries: searchAllCountries,
     Country: { english_name: 'Turkey', iso_3166_1: 'TR' },
-    MinimumUserVotes: computed(() => {
-      if (route.query) {
-        if (route.query.query === 'top-rated') {
-          return 300
-        } else return 0
-      } else return 0
-    }),
+    searchAllAvailabilities: true,
+    Availabilities: [],
+    MinimumUserVotes: 0,
     UserScore: { min: 0, max: 10 },
     Runtime: { min: 0, max: 400 },
-    DateFrom: computed(() => {
-      if (route.query) {
-        switch (route.query.query) {
-          case 'now-playing': {
-            let date = new Date()
-
-            date.setDate(date.getDate() - 38)
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'upcoming': {
-            let date = new Date()
-            date.setDate(date.getDate() + 3)
-
-            return date.toISOString().split('T')[0]
-          }
-          default:
-            return ''
-        }
-      } else return ''
-    }),
-    DateTo: computed(() => {
-      if (route.query) {
-        switch (route.query.query) {
-          case 'popular': {
-            let date = new Date()
-            date.setHours(0, 0, 0, 0)
-            date.setMonth(date.getMonth() + 5)
-
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'now-playing': {
-            let date = new Date()
-
-            date.setDate(date.getDate() + 3)
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'upcoming': {
-            let date = new Date()
-
-            date.setDate(date.getDate() + 25)
-            return date.toISOString().split('T')[0]
-          }
-
-          case 'top-rated': {
-            let date = new Date()
-            date.setMonth(date.getMonth() + 5)
-            return date.toISOString().split('T')[0]
-          }
-          default:
-            return ''
-        }
-      } else return ''
-    }),
+    DateFrom: '',
+    DateTo: '',
     Genres: [],
     Language: { english_name: 'None Selected', iso_3166_1: '' },
     WatchProviders: [],
-    Releases: computed(() => {
-      if (route.query) {
-        switch (route.query.query) {
-          case 'now-playing':
-            return [2]
-          case 'upcoming':
-            return [2]
-          default:
-            return [1, 2, 3, 4, 5, 6]
-        }
-      } else return [1, 2, 3, 4, 5, 6]
-    })
+    Releases: [1, 2, 3, 4, 5, 6]
   })
   const optionsChanged = ref(false)
   watch(
@@ -130,6 +63,60 @@
   function closeList(e, array) {
     e.className = 'passive'
     array.length = 0
+  }
+  async function initialOptions(obj) {
+    let lang = navigator.language
+    getAvailableRegions(lang)
+    getGenres(lang)
+    await getCountries(lang)
+    await getWatchProviders(lang, lang.split('-')[1])
+    countries.value.forEach((item) => {
+      if (item.iso_3166_1 === lang.split('-')[1]) {
+        discoverOptions.Region = item
+      }
+    })
+    switch (route.query.query) {
+      case 'popular': {
+        let dateTo = new Date()
+        dateTo.setHours(0, 0, 0, 0)
+        dateTo.setMonth(dateTo.getMonth() + 5)
+
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        break
+      }
+      case 'top-rated': {
+        obj.MinimumUserVotes = 300
+        let dateTo = new Date()
+        dateTo.setMonth(dateTo.getMonth() + 5)
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        break
+      }
+      case 'now-playing': {
+        let dateFrom = new Date()
+        dateFrom.setDate(dateFrom.getDate() - 37)
+        obj.DateFrom = dateFrom.toISOString().split('T')[0]
+        let dateTo = new Date()
+        dateTo.setDate(dateTo.getDate() + 5)
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        searchAllReleases.value = false
+        obj.Releases = [3]
+        break
+      }
+      case 'upcoming': {
+        let dateFrom = new Date()
+        obj.DateFrom = dateFrom.toISOString().split('T')[0]
+        dateFrom.setDate(dateFrom.getDate() + 5)
+
+        let dateTo = new Date()
+
+        dateTo.setDate(dateTo.getDate() + 25)
+        obj.DateTo = dateTo.toISOString().split('T')[0]
+        searchAllReleases.value = false
+        obj.Releases = [3]
+        break
+      }
+    }
+    emits('discover', discoverOptions)
   }
   //#region setSelected
   function setSelectedKeywords(name) {
@@ -177,6 +164,13 @@
     discoverOptions.Language.english_name = set.english_name
     discoverOptions.Language.iso_3166_1 = set.iso_639_1
     event.target.parentElement.classList.toggle('collapse')
+  }
+  function setSelectedAvailabilities(release) {
+    if (!discoverOptions.Availabilities.includes(release)) {
+      discoverOptions.Availabilities.push(release)
+    } else {
+      discoverOptions.Availabilities.splice(discoverOptions.Availabilities.indexOf(release), 1)
+    }
   }
   //#endregion
   //#region Regions
@@ -321,14 +315,10 @@
   }, 150)
   //#endregion
   onBeforeMount(() => {
-    getAvailableRegions('en-US')
-    getWatchProviders('en-US', 'TR')
-    getCountries('en-US')
-    getGenres('en-US')
     getLanguages()
 
     filteredRegions.value = availableRegions.value
-    emits('discover', discoverOptions)
+    initialOptions(discoverOptions)
   })
 </script>
 
@@ -408,10 +398,33 @@
         </h2>
 
         <ul v-if="collapseFilters">
+          <li>
+            <h4>Availabilities</h4>
+            <input
+              type="checkbox"
+              id="searchAllAvailabilities"
+              v-model="discoverOptions.searchAllAvailabilities"
+              @change="(e) => (e.target.checked ? (discoverOptions.Availabilities = []) : '')" />
+            <label for="searchAllAvailabilities">Search all availabilities?</label>
+            <template v-if="!discoverOptions.searchAllAvailabilities">
+              <div v-for="item in availabilities" :key="item">
+                <input
+                  type="checkbox"
+                  :id="item"
+                  @change="setSelectedAvailabilities(item)"
+                  :checked="discoverOptions.Availabilities.includes(item)" />
+                <label :for="item">{{ item }}</label>
+              </div>
+            </template>
+          </li>
           <li class="releaseDates">
             <h4>Release Dates</h4>
             <div>
-              <input type="checkbox" id="searchAllDates" v-model="searchAllReleases" />
+              <input
+                type="checkbox"
+                id="searchAllDates"
+                v-model="searchAllReleases"
+                @change="(e) => (e.target.checked ? (discoverOptions.Releases = []) : '')" />
               <label for="searchAllDates">Search all releases</label>
             </div>
             <div v-if="!searchAllReleases">

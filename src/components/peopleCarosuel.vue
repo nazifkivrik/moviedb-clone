@@ -85,7 +85,7 @@
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
   .peopleCarosuel {
     margin: 25px;
     margin-left: 0;
@@ -121,7 +121,10 @@
   }
 
   .name {
-    font-weight: 500;
+    a {
+      font-weight: 600;
+      font-size: 0.8em;
+    }
   }
 
   .text {
@@ -131,8 +134,9 @@
   }
   .role {
     font-weight: 300;
+    font-size: 0.8em;
   }
   .showMore {
-    font-weight: bold;
+    font-weight: 500;
   }
 </style>

@@ -24,6 +24,7 @@
   const discovered = ref()
 
   async function discover(discoverOptions) {
+    console.log(discoverOptions)
     let text = ''
     text = text + 'include_adult=false&include_null_first_air_dates=false'
     if (discoverOptions.Language.iso_3166_1 != '') {
@@ -34,9 +35,8 @@
       text = text + '&with_keywords=' + discoverOptions.Keywords.toString()
     }
     text = text + '&sort_by=' + discoverOptions.SortOpt.text
-    if (discoverOptions.Region !== null) {
-      text = text + '&watch_region=' + discoverOptions.Region.iso_3166_1
-    }
+
+    text = text + '&watch_region=' + discoverOptions.Region.iso_3166_1
 
     if (discoverOptions.MinimumUserVotes !== 0) {
       text = text + '&vote_count.gte=' + discoverOptions.MinimumUserVotes
@@ -46,10 +46,10 @@
     text = text + '&vote_average.lte=' + discoverOptions.UserScore.max
     text = text + '&vote_average.gte=' + discoverOptions.UserScore.min
     if (discoverOptions.DateFrom) {
-      text = text + '&release_date.gte=' + discoverOptions.DateFrom
+      text = text + '&first_air_date.gte=' + discoverOptions.DateFrom
     }
     if (discoverOptions.DateTo) {
-      text = text + '&release_date.lte=' + discoverOptions.DateTo
+      text = text + '&first_air_date.lte=' + discoverOptions.DateTo
     }
     if (discoverOptions.Genres.length > 0) {
       text = text + '&with_genres=' + discoverOptions.Genres.toString()
@@ -62,8 +62,26 @@
       discoverOptions.Networks.forEach((item) => arr.push(item.id))
       text += '&with_networks=' + arr.toString()
     }
-    fetchText = text
+    if (discoverOptions.Availabilities.length > 0) {
+      let availabilitiesText = ''
+
+      discoverOptions.Availabilities.forEach((item) => {
+        if (
+          discoverOptions.Availabilities.indexOf(item) !==
+          discoverOptions.Availabilities.length - 1
+        ) {
+          availabilitiesText = availabilitiesText + item.toLowerCase() + '|'
+        } else {
+          availabilitiesText = availabilitiesText + item.toLowerCase()
+        }
+      })
+      availabilitiesText = availabilitiesText.replace('stream', 'flatrate')
+
+      text = text + '&with_watch_monetization_types=' + availabilitiesText
+    }
     console.log(text)
+    fetchText = text
+
     try {
       const response = await fetch('https://api.themoviedb.org/3/discover/tv?' + text, options)
       const data = await response.json()
@@ -89,7 +107,7 @@
         let newPage
         fetchText = fetchText + '&page=' + (currentPage + 1)
         const response = await fetch(
-          'https://api.themoviedb.org/3/discover/movie?' + fetchText,
+          'https://api.themoviedb.org/3/discover/tv?' + fetchText,
           options
         )
         const data = await response.json()

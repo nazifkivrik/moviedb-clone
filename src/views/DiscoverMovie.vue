@@ -71,8 +71,25 @@
       })
       text = text + '&with_release_type=' + releases
     }
-    fetchText = text
+    if (discoverOptions.Availabilities.length > 0) {
+      let availabilitiesText = ''
+
+      discoverOptions.Availabilities.forEach((item) => {
+        if (
+          discoverOptions.Availabilities.indexOf(item) !==
+          discoverOptions.Availabilities.length - 1
+        ) {
+          availabilitiesText = availabilitiesText + item.toLowerCase() + '|'
+        } else {
+          availabilitiesText = availabilitiesText + item.toLowerCase()
+        }
+      })
+      availabilitiesText = availabilitiesText.replace('stream', 'flatrate')
+
+      text = text + '&with_watch_monetization_types=' + availabilitiesText
+    }
     console.log(text)
+    fetchText = text
     try {
       const response = await fetch('https://api.themoviedb.org/3/discover/movie?' + text, options)
       const data = await response.json()
@@ -111,7 +128,6 @@
   }, 200)
   onMounted(() => {
     window.addEventListener('scroll', getDiscoverPagesDebounce)
-    console.log(router)
   })
   onUnmounted(() => {
     window.removeEventListener('scroll', getDiscoverPagesDebounce)
