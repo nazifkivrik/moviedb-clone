@@ -35,7 +35,7 @@
   }
   @media all and (min-width: 1200px) {
     * {
-      font-size: 19px;
+      font-size: 16px;
     }
   }
 

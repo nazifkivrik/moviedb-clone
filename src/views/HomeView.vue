@@ -1,15 +1,60 @@
 <script setup>
-  import { onBeforeMount } from 'vue'
+  import { onBeforeMount, reactive, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
   import search from '../components/SearchArea.vue'
   import ribbonComp from '../components/RibbonComp/ribbonComp.vue'
   import { useDbStore } from '../stores/dbStore'
+  import { storeToRefs } from 'pinia'
   const store = useDbStore()
-  const { t } = useI18n()
+  const { getList } = storeToRefs(store)
+  const { t, locale } = useI18n()
+  const objTemplate = { currentPage: null, totalPage: null, array: [] }
+  const movieRibbonObj = reactive([objTemplate, objTemplate, objTemplate, objTemplate])
+  const movieRibbonEnum = ['now_playing', 'popular', 'top_rated', 'upcoming']
+  const movieRibbonSelectedIndex = ref(0)
+  const trendingRibbonObj = reactive([objTemplate, objTemplate])
+  const trendingRibbonSelectedIndex = ref(0)
+  const trendingRibbonEnum = ['day', 'week']
+  const freeToWatchRibbonObj = reactive([objTemplate, objTemplate])
+  const freeToWatchSelectedIndex = ref(0)
+  const freeToWatchEnum = ['movie', 'tv']
   onBeforeMount(() => {
     store.resetStore()
-    store.getList()
+    getArray(0)
+    getTrendingList(0)
+    getfreeToWatch(0)
   })
+
+  async function getArray(index) {
+    movieRibbonObj[index] = await store.getList(
+      'movie',
+      movieRibbonEnum[index],
+      locale.value,
+      1,
+      locale.value.split('-')[1]
+    )
+    movieRibbonSelectedIndex.value = index
+  }
+  async function getTrendingList(index) {
+    trendingRibbonObj[index] = await store.getTrendingList(
+      'all',
+      trendingRibbonEnum[index],
+      locale.value
+    )
+    trendingRibbonSelectedIndex.value = index
+  }
+  async function getfreeToWatch(index) {
+    let query = `include_adult=false&include_video=false&language=${
+      locale.value
+    }&page=1&sort_by=popularity.desc&with_watch_monetization_types=free&watch_region=${
+      locale.value.split('-')[1]
+    }`
+    if (index === 1) {
+      query += '&include_null_first_air_dates=false'
+    }
+    freeToWatchRibbonObj[index] = await store.Discover(freeToWatchEnum[index], query)
+    freeToWatchSelectedIndex.value = index
+  }
 </script>
 
 <template>
@@ -19,12 +64,20 @@
       <ribbonComp
         :button-names="[t('Today'), t('This Week')]"
         :header="t('Trending')"
-        :list="store.trendingLists.All"
+        :carosuelArray="trendingRibbonObj[trendingRibbonSelectedIndex].array"
+        @which-one-selected="getTrendingList"
         class="ribbon" />
       <ribbonComp
         :button-names="[t('Streaming'), t('Popular'), t('Top Rated'), t('Up Coming')]"
         :header="'Movies'"
-        :list="store.movieLists"
+        :carosuelArray="movieRibbonObj[movieRibbonSelectedIndex].array"
+        @which-one-selected="getArray"
+        class="ribbon" />
+      <ribbonComp
+        :button-names="[t('Movies'), t('TV')]"
+        :header="'Free To Watch'"
+        :carosuelArray="freeToWatchRibbonObj[freeToWatchSelectedIndex].array"
+        @which-one-selected="getfreeToWatch"
         class="ribbon" />
     </section>
   </main>

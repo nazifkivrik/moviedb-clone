@@ -25,7 +25,9 @@ import {
   faMagnifyingGlass,
   faXmark,
   faCheck,
-  faAnglesUp
+  faAnglesUp,
+  faLeftLong,
+  faRightLong
 } from '@fortawesome/free-solid-svg-icons'
 import { faFacebook, faImdb, faInstagram, faTwitter } from '@fortawesome/free-brands-svg-icons'
 library.add(
@@ -50,7 +52,9 @@ library.add(
   faMagnifyingGlass,
   faXmark,
   faCheck,
-  faAnglesUp
+  faAnglesUp,
+  faLeftLong,
+  faRightLong
 )
 const options = {
   method: 'GET',

@@ -1,9 +1,9 @@
 <script setup>
   import { onBeforeMount, inject, ref, onMounted } from 'vue'
   import { useRoute } from 'vue-router'
-  import backToMain from './backToMain.vue'
-  import subNavigationBar from '../../subNavigationBar.vue'
-  import { useDbStore } from '../../../stores/dbStore'
+  import backToMain from '@/components/backToMain.vue'
+  import subNavigationBar from '@/components/subNavigationBar.vue'
+  import { useDbStore } from '@/stores/dbStore'
   const options = inject('fetchOptions')
   const episodeGroups = ref(null)
   const route = useRoute()

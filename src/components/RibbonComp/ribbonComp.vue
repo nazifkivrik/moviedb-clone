@@ -1,16 +1,11 @@
 <script setup>
-  import { toRefs, onMounted, ref, computed } from 'vue'
+  import { toRefs } from 'vue'
   import buttonGroup from './buttonGroup.vue'
   import carosuel from './carosuelComp.vue'
-  const props = defineProps({ buttonNames: Array, header: String, list: Object })
-  const { buttonNames, header, list } = toRefs(props)
-  const listIndex = ref(0)
-  onMounted(() => {
-    console.log()
-  })
-  const carosuelArray = computed(() => {
-    return list.value[Object.keys(list.value)[listIndex.value]]
-  })
+  const props = defineProps({ buttonNames: Array, header: String, carosuelArray: Array })
+  const { buttonNames, header, carosuelArray } = toRefs(props)
+
+  const emits = defineEmits(['which-one-selected'])
 </script>
 
 <template>
@@ -20,14 +15,12 @@
         <h1>{{ header }}</h1>
         <buttonGroup
           :button-names="buttonNames"
-          @which-one="(value) => (listIndex = value)"
+          @which-one="(value) => emits('which-one-selected', value)"
           class="buttonGroup" />
       </div>
 
       <div class="carosuel">
-        <carosuel
-          :carosuelArray="carosuelArray"
-          v-if="carosuelArray !== null && carosuelArray !== undefined" />
+        <carosuel :carosuelArray="carosuelArray" v-if="carosuelArray.length > 0" />
       </div>
     </div>
   </div>

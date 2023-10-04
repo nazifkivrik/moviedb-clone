@@ -2,18 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import searchResults from '../views/SearchResults.vue'
 import ViewContainer from '../views/ViewContainer.vue'
-import translationDetails from '@/components/DetailComponents/movieAndTV/translationDetails.vue'
-import CastDetails from '../components/DetailComponents/movieAndTV/castDetails.vue'
+import translationDetails from '@/views/detailViews/translationDetails.vue'
+import CastDetails from '@/views/detailViews//castDetails.vue'
 import videoPlayer from '../components/videoPlayer.vue'
-import alternativeTitles from '../components/DetailComponents/movieAndTV/alternativeTitles.vue'
-import releaseDates from '../components/DetailComponents/movieAndTV/releaseDates.vue'
-import images from '../components/DetailComponents/movieAndTV/mediaImages.vue'
-import videos from '../components/DetailComponents/movieAndTV/mediaVideos.vue'
-import episodeGroups from '@/components/DetailComponents/movieAndTV/episodeGroups.vue'
-import tvSeasons from '@/components/DetailComponents/movieAndTV/tvSeasons.vue'
-import group from '@/components/DetailComponents/movieAndTV/episodeGroupDetail.vue'
+import alternativeTitles from '@/views/detailViews//alternativeTitles.vue'
+import releaseDates from '@/views/detailViews//releaseDates.vue'
+import images from '@/views/detailViews//mediaImages.vue'
+import videos from '@/views/detailViews//mediaVideos.vue'
+import episodeGroups from '@/views/detailViews//episodeGroups.vue'
+import tvSeasons from '@/views/detailViews//tvSeasons.vue'
+import group from '@/views/detailViews//episodeGroupDetail.vue'
 import discoverMovie from '@/views/DiscoverMovie.vue'
 import discoverTV from '@/views/DiscoverTVShows.vue'
+import tvEpisodes from '@/views/detailViews/tvEpisodes.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -80,6 +81,11 @@ const router = createRouter({
       path: '/:type/:id/seasons',
       name: 'seasons',
       component: tvSeasons
+    },
+    {
+      path: '/:type/:id/season/:seasonNumber',
+      name: 'season',
+      component: tvEpisodes
     },
     {
       path: '/:type/:id/images/:images',

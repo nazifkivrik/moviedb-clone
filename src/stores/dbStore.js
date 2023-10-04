@@ -112,168 +112,72 @@ function currencyFormatter(cur) {
 }
 
 export const useDbStore = defineStore('dbstore', () => {
-  const movieLists = reactive({ Streaming: null, Popular: null, TopRated: null, Upcoming: null })
-  const trendingLists = reactive({
-    All: { Today: null, 'This Week': null },
-    Movies: { Today: null, 'This Week': null },
-    People: { Today: null, 'This Week': null },
-    TV: { Today: null, 'This Week': null }
-  })
-  const TVSeriesLists = reactive({
-    'Airing Today': null,
-    'On TV': null,
-    Popular: null,
-    'Top Rated': null
-  })
   const shared = ref(null)
   const person = ref(null)
+  const language = ref(null)
   function resetStore() {
     shared.value = null
     person.value = null
   }
 
   /**
-   *Documentation
-   * @param {now_playing} now_playing NowPlayingMovies
-   * @param {popular} popular popularMovies
-   * @param {top_rated} top_rated topRatedMovies
-   * @param {upcoming} upcoming upcomingMovies
-   */
-  async function getMovieList(type) {
-    const response = await fetch(
-      `https://api.themoviedb.org/3/movie/${type}?language=en-US&page=1`,
-      options
-    )
-    const data = await response.json()
-    switch (type) {
-      case 'now_playing':
-        movieLists.Streaming = data.results
-        break
-      case 'popular':
-        movieLists.Popular = data.results
-        break
-      case 'top_rated':
-        movieLists.TopRated = data.results
-        break
-      case 'upcoming':
-        movieLists.Upcoming = data.results
-        break
-    }
-  }
-  /**
    *
    * @param {type} type all,movie,person,tv
    * @param {time} time day,week
+   *  @param {language} language template en-US
    */
-  async function getTrendingList(type, time) {
+  async function getTrendingList(type, time, language) {
     const response = await fetch(
-      `https://api.themoviedb.org/3/trending/${type}/${time}?language=en-US`,
+      `https://api.themoviedb.org/3/trending/${type}/${time}?language=${language}`,
       options
     )
     const data = await response.json()
-    switch (time) {
-      case 'day':
-        switch (type) {
-          case 'all':
-            trendingLists.All.Today = data.results
-            break
-          case 'movie':
-            trendingLists.Movies.Today = data.results
-            break
-          case 'person':
-            trendingLists.People.Today = data.results
-            break
-          case 'tv':
-            trendingLists.TV.Today = data.results
-            break
-        }
-        break
 
-      case 'week':
-        switch (type) {
-          case 'all':
-            trendingLists.All['This Week'] = data.results
-            break
-          case 'movie':
-            trendingLists.Movies['This Week'] = data.results
-            break
-          case 'person':
-            trendingLists.People['This Week'] = data.results
-            break
-          case 'tv':
-            trendingLists.TV['This Week'] = data.results
-            break
-        }
-        break
-    }
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
   }
   /**
    *
+   *  @param {mediaType} mediaType tv or movie
    * @param {type} type airing_today,on_the_air,popular,top_rated
+   *  @param {language} language default en-US
+   *   @param {page} page pageNumber
+
    */
-  async function getTVSeriesList(type) {
+  async function getList(mediaType, type, language, page, region) {
     const response = await fetch(
-      `https://api.themoviedb.org/3/tv/${type}?language=en-US&page=1`,
+      `https://api.themoviedb.org/3/${mediaType}/${type}?language=${language}&page=${page}&region=${region}`,
       options
     )
     const data = await response.json()
-
-    switch (type) {
-      case 'airing_today':
-        TVSeriesLists['Airing Today'] = data.results
-        break
-      case 'on_the_air':
-        TVSeriesLists['On TV'] = data.results
-        break
-      case 'popular':
-        TVSeriesLists.Popular = data.results
-        break
-      case 'top_rated':
-        TVSeriesLists['Top Rated'] = data.results
-        break
-    }
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
   }
-
-  function getList(type) {
-    switch (type) {
-      case 'movieLists':
-        getMovieLists()
-        break
-      case 'trendingLists':
-        getTrendingLists()
-        break
-      case 'TVSeriesLists':
-        getTVSeriesLists()
-        break
-
-      default:
-        getMovieLists()
-        getTrendingLists()
-        getTVSeriesLists()
-        break
-    }
-    function getMovieLists() {
-      getMovieList('now_playing')
-      getMovieList('popular')
-      getMovieList('top_rated')
-      getMovieList('upcoming')
-    }
-    function getTrendingLists() {
-      getTrendingList('all', 'day')
-      getTrendingList('all', 'week')
-      getTrendingList('movie', 'day')
-      getTrendingList('movie', 'week')
-      getTrendingList('person', 'day')
-      getTrendingList('person', 'week')
-    }
-    function getTVSeriesLists() {
-      getTVSeriesList('airing_today')
-      getTVSeriesList('on_the_air')
-      getTVSeriesList('popular')
-      getTVSeriesList('top_rated')
-    }
+  /**
+   *
+   * @param {mediaType} mediaType tv-movie
+   * @param {query} query options https://developer.themoviedb.org/reference/discover-movie
+   * @returns
+   */
+  async function Discover(mediaType, query) {
+    const response = await fetch(
+      `      https://api.themoviedb.org/3/discover/${mediaType}?${query}`,
+      options
+    )
+    const data = await response.json()
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
   }
-
+  async function getLanguages() {
+    const response = await fetch('https://api.themoviedb.org/3/configuration/languages', options)
+    const data = await response.json()
+    return data
+  }
+  async function getCountries(language) {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/configuration/countries?language=${language}`,
+      options
+    )
+    const data = await response.json()
+    return data
+  }
   async function getShared(type, id, language) {
     console.log('fetching')
     const response = await fetch(
@@ -355,14 +259,13 @@ export const useDbStore = defineStore('dbstore', () => {
   }
 
   return {
+    language,
     resetStore,
-    movieLists,
-    getMovieList,
-    trendingLists,
     getTrendingList,
-    TVSeriesLists,
-    getTVSeriesList,
     getList,
+    getLanguages,
+    getCountries,
+    Discover,
     shared,
     getShared,
     person,

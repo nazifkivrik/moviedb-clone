@@ -1,6 +1,6 @@
 <script setup>
   import subNavigationBar from '@/components/subNavigationBar.vue'
-  import backToMain from '@/components/DetailComponents/movieAndTV/backToMain.vue'
+  import backToMain from '@/components/backToMain.vue'
   import { useDbStore } from '@/stores/dbStore'
   import { toRefs, onBeforeMount } from 'vue'
   import { useRoute } from 'vue-router'

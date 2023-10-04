@@ -2,7 +2,7 @@
   import { useRoute } from 'vue-router'
   import { useDbStore } from '@/stores/dbStore'
   import subNav from '@/components/subNavigationBar.vue'
-  import backToMain from './backToMain.vue'
+  import backToMain from '@/components/backToMain.vue'
   import { toRefs, computed, ref, onBeforeMount, watch } from 'vue'
   const youtubeDetails = ref(null)
   const route = useRoute()

@@ -70,7 +70,7 @@
           discoverOptions.Availabilities.indexOf(item) !==
           discoverOptions.Availabilities.length - 1
         ) {
-          availabilitiesText = availabilitiesText + item.toLowerCase() + '|'
+          availabilitiesText = availabilitiesText + item.toLowerCase() + ','
         } else {
           availabilitiesText = availabilitiesText + item.toLowerCase()
         }

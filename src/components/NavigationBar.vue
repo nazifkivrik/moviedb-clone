@@ -1,13 +1,54 @@
 <script setup>
   import appLink from './appLink.vue'
-  import { ref, computed } from 'vue'
+  import { ref, computed, onBeforeMount } from 'vue'
   import { useI18n } from 'vue-i18n'
-  const { locale } = useI18n()
+  import { useRouter } from 'vue-router'
+  import { useDbStore } from '@/stores/dbStore.js'
+  import customSelect from '@/components/customSelectMenu.vue'
+  const store = useDbStore()
+  const { availableLocales } = useI18n()
   const isMobile = computed(() => {
     return window.innerWidth
   })
+  function changeLocalStorage(val) {
+    localStorage.setItem('language', val.code)
+    router.go(0)
+  }
+  function getLocalStorage() {
+    let lang = localStorage.getItem('language') || 'en-US'
+    let returnobj
+    availableLanguages.value.forEach((language) => {
+      if (language.code === lang) {
+        returnobj = language
+      }
+    })
+    return returnobj
+  }
   const toggle = ref(false)
-  let query = 'now-playing'
+  const router = useRouter()
+  const availableLanguages = ref()
+  function filterLanguage(availableLocales, languageList) {
+    let lang = []
+    languageList.forEach((element) => {
+      availableLocales.forEach((available) => {
+        if (available.split('-')[0] === element.iso_639_1) {
+          element.code = available
+          element.name = element.name + '(' + element.code + ')'
+          lang.push(element)
+        }
+      })
+    })
+    console.log(lang)
+    return lang
+  }
+  let languages = ''
+  async function initialize() {
+    languages = await store.getLanguages()
+    availableLanguages.value = filterLanguage(availableLocales, languages)
+  }
+  onBeforeMount(() => {
+    initialize()
+  })
 </script>
 
 <template>
@@ -73,11 +114,13 @@
       </nav>
     </div>
     <div class="othermenus" v-if="isMobile > 800">
-      <select v-model="locale">
-        <option v-for="locale in $i18n.availableLocales" :key="locale">
-          {{ locale }}
-        </option>
-      </select>
+      <customSelect
+        :dropdownArr="availableLanguages"
+        :defaultVal="getLocalStorage()"
+        :objectKey="'name'"
+        @selectedVal="changeLocalStorage"
+        v-if="availableLanguages" />
+
       <icon-lib icon="fa-solid fa-plus" size="lg" />
       <icon-lib icon="fa-solid fa-circle-half-stroke" size="lg" />
       <icon-lib icon="fa-solid fa-bell" size="lg" />
@@ -88,11 +131,12 @@
         <icon-lib icon="fa-solid fa-bars" size="2xl" />
       </div>
       <div class="sideBarItems" v-if="toggle">
-        <select v-model="locale">
-          <option v-for="locale in $i18n.availableLocales" :key="locale">
-            {{ locale }}
-          </option>
-        </select>
+        <customSelect
+          :dropdownArr="availableLanguages"
+          :defaultVal="getLocalStorage()"
+          :objectKey="'name'"
+          @selectedVal="changeLocalStorage"
+          v-if="availableLanguages" />
         <span> <icon-lib icon="fa-solid fa-plus" size="lg" /> Add</span>
         <span> <icon-lib icon="fa-solid fa-circle-half-stroke" size="lg" /> Theme </span>
         <span> <icon-lib icon="fa-solid fa-bell" size="lg" /> Notifications</span>
@@ -109,6 +153,7 @@
   .close {
     width: 35px;
   }
+
   header {
     display: flex;
     flex-direction: row;
@@ -223,6 +268,7 @@
       margin-right: 30px;
       align-items: center;
       justify-content: center;
+
       button {
         background-color: lightblue;
         color: white;
