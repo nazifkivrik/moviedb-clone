@@ -2,50 +2,36 @@
   import subNav from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
   import { useRoute } from 'vue-router'
-  import { onBeforeMount, ref, inject, toRefs } from 'vue'
+  import { onBeforeMount, ref, toRefs } from 'vue'
+  import { GroupBy } from '@/utils/functions.js'
   import { useDbStore } from '@/stores/dbStore'
   const route = useRoute()
   const store = useDbStore()
-  const options = inject('fetchOptions')
   const titles = ref(null)
   const { shared } = toRefs(store)
   const titleCount = ref(null)
   const focusElement = ref(null)
 
   let regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
-  async function gettitleSummary(type, id) {
-    const response = await fetch(
-      `https://api.themoviedb.org/3/${type}/${id}/alternative_titles`,
-      options
-    )
-    const data = await response.json()
-    if (data.titles) {
-      titles.value = data.titles
+  async function initialize() {
+    let res = await store.getMediaDetails(route.params.type, route.params.id, 'alternative_titles')
+    if (route.params.type === 'movie') {
+      titles.value = res.titles
     } else {
-      titles.value = data.results
+      titles.value = res.results
     }
-
-    console.log(titles.value)
     titleCount.value = titles.value.length
-    titles.value = regionReduce(titles.value)
+    titles.value = GroupBy(titles.value, 'iso_3166_1')
+    if (!store.shared) {
+      store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
   }
+
   onBeforeMount(() => {
-    gettitleSummary(route.params.type, route.params.id)
+    initialize()
   })
 
-  function regionReduce(array) {
-    let reduced = array.reduce((obj, item) => {
-      if (obj[item.iso_3166_1]) {
-        obj[item.iso_3166_1].push(item)
-      } else {
-        obj[item.iso_3166_1] = [item]
-      }
-      return obj
-    }, {})
-    return reduced
-  }
   function scrollFocus(index) {
-    console.log(focusElement.value[index].offsetLeft)
     window.scroll(0, focusElement.value[index].offsetTop)
   }
 </script>

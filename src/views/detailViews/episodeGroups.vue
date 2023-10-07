@@ -1,31 +1,28 @@
 <script setup>
-  import { onBeforeMount, inject, ref, onMounted } from 'vue'
+  import { onBeforeMount, ref } from 'vue'
   import { useRoute } from 'vue-router'
   import backToMain from '@/components/backToMain.vue'
   import subNavigationBar from '@/components/subNavigationBar.vue'
   import { useDbStore } from '@/stores/dbStore'
-  const options = inject('fetchOptions')
   const episodeGroups = ref(null)
   const route = useRoute()
   const store = useDbStore()
-  import { useI18n } from 'vue-i18n'
-  const { locale } = useI18n()
+
   const parent = ref(null)
-  async function getEpisodeGroups(id) {
-    const response = await fetch(`https://api.themoviedb.org/3/tv/${id}/episode_groups`, options)
-    const data = await response.json()
-    episodeGroups.value = data.results
+
+  async function initialize() {
+    let res = await store.getMediaDetails('tv', route.params.id, 'episode_groups')
+    episodeGroups.value = res.results
+    // eslint-disable-next-line no-unused-vars
     for (const [key, value] of Object.entries(episodeGroups.value)) {
-      value.details = await getEpisodeGroupDetails(value.id)
+      value.details = await store.getTVEpisodeGroupsDetails(value.id)
+    }
+    episodeGroups.value = res.results
+    if (!store.shared) {
+      store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
     }
   }
-  async function getEpisodeGroupDetails(id) {
-    let details
-    const response = await fetch(`https://api.themoviedb.org/3/tv/episode_group/${id}`, options)
-    const data = await response.json()
-    details = data
-    return details
-  }
+
   function toggleState(index) {
     if (parent.value[index]) {
       if (parent.value[index].children[4].className === 'open') {
@@ -36,13 +33,7 @@
     }
   }
   onBeforeMount(() => {
-    if (!store.shared) {
-      store.getShared(route.params.type, route.params.id, locale.value)
-    }
-    getEpisodeGroups(route.params.id)
-  })
-  onMounted(() => {
-    console.log(parent.value)
+    initialize()
   })
 </script>
 

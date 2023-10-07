@@ -1,9 +1,9 @@
 <script setup>
-  import { onBeforeMount, ref } from 'vue'
   import { debounce } from 'lodash'
-  import { useDbStore } from '../stores/dbStore'
-  import { useRouter } from 'vue-router'
+  import { onBeforeMount, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { useRouter } from 'vue-router'
+  import { useDbStore } from '../stores/dbStore'
   const { t } = useI18n()
   const router = useRouter()
   const store = useDbStore()
@@ -12,22 +12,18 @@
   const previewItems = ref(null)
   const searchFocused = ref(false)
   const searchQuery = ref(null)
-  const options = {
-    method: 'GET',
-    headers: {
-      accept: 'application/json',
-      Authorization:
-        'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
+  async function initialize() {
+    for (let index = 0; index < 5; index++) {
+      let randomMedia = await store.Discover(
+        'movie',
+        `include_adult=false&include_video=false&language=${store.language}&page=${randomNumber}&sort_by=popularity.desc`
+      )
+      randomMovie.value = randomMedia.array[Math.round(Math.random() * 20)]
+      if (randomMovie.value.backdrop_path) {
+        break
+      }
     }
-  }
 
-  async function fetchRandom() {
-    const response = await fetch(
-      `https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=${randomNumber}&sort_by=popularity.desc`,
-      options
-    )
-    const data = await response.json()
-    randomMovie.value = data.results[Math.round(Math.random() * 20)]
     randomMovie.value.backdrop_path =
       'url(' +
       `https://image.tmdb.org/t/p/w1920_and_h800_multi_faces${randomMovie.value.backdrop_path}` +
@@ -35,19 +31,15 @@
   }
 
   onBeforeMount(() => {
-    fetchRandom()
+    initialize()
   })
   function search(query) {
     router.push({ path: '/search', query: { query, type: 'movie' } })
   }
 
   const debouncedPrew = debounce(async function preview(event) {
-    const response = await fetch(
-      `https://api.themoviedb.org/3/search/movie?query=${event.target.value}&include_adult=false&language=en-US&page=1`,
-      options
-    )
-    const data = await response.json()
-    previewItems.value = data.results
+    let response = await store.searchMovie(event.target.value, store.language, '1')
+    previewItems.value = await response.array
   }, 600)
 
   function liClick(id) {
@@ -96,7 +88,10 @@
               v-for="previewItem in previewItems"
               :key="previewItem"
               @click="liClick(previewItem.id)">
-              <img :src="store.imageURL('w92', previewItem.poster_path)" alt="" />
+              <span class="img">
+                <img :src="store.imageURL('w92', previewItem.poster_path)" alt="" />
+              </span>
+
               <span class="previewInfo"
                 ><span class="previewTitle">{{ previewItem.original_title }}</span>
                 <span class="previewRelDate">{{ previewItem.release_date }}</span>

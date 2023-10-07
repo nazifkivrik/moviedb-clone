@@ -1,26 +1,24 @@
 <script setup>
-  import { inject, ref, onBeforeMount } from 'vue'
-  import { useRoute } from 'vue-router'
   import backToMain from '@/components/backToMain.vue'
   import subNavigationBar from '@/components/subNavigationBar.vue'
   import { useDbStore } from '@/stores/dbStore'
-  const options = inject('fetchOptions')
+  import { onBeforeMount, ref } from 'vue'
+  import { useRoute } from 'vue-router'
   const groupDetail = ref(null)
   const singleGroup = ref(null)
   const store = useDbStore()
   const route = useRoute()
-  async function getEpisodeGroupDetails(id) {
-    const response = await fetch(`https://api.themoviedb.org/3/tv/episode_group/${id}`, options)
-    const data = await response.json()
-    groupDetail.value = data
+  async function initialize() {
+    groupDetail.value = await store.getTVEpisodeGroupsDetails(route.params.groupId)
     groupDetail.value.groups.forEach((element) => {
       if (element.id === route.query.group) {
         singleGroup.value = element
       }
     })
   }
+
   onBeforeMount(() => {
-    getEpisodeGroupDetails(route.params.groupId)
+    initialize()
   })
 </script>
 
@@ -36,7 +34,7 @@
     <ul>
       <li v-for="episode in singleGroup.episodes" :key="episode">
         <span>
-          <img :src="store.imageURL('w227_and_h127_bestv2', episode.still_path)" alt="" />
+          <img :src="store.imageURL('w227_and_h127_bestv2', episode.still_path, 'tv')" alt="" />
         </span>
         <span class="info">
           <h3>{{ episode.episode_number }} {{ episode.name }}</h3>

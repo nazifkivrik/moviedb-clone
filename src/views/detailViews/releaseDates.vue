@@ -2,48 +2,42 @@
   import subNav from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
   import { useRoute } from 'vue-router'
-  import { onBeforeMount, ref, inject, toRefs } from 'vue'
+  import { onBeforeMount, ref, toRefs } from 'vue'
   import { useDbStore } from '@/stores/dbStore'
 
   const route = useRoute()
   const store = useDbStore()
-  const options = inject('fetchOptions')
   const { shared } = toRefs(store)
   const focusElement = ref(null)
   const releaseDates = ref(null)
   let releaseDateCount = 0
 
   let regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
-
-  async function getReleaseDates(type, id) {
-    const response = await fetch(
-      `https://api.themoviedb.org/3/${type}/${id}/release_dates`,
-
-      options
-    )
-    const data = await response.json()
-    for (let obj in data.results) {
-      releaseDateCount = releaseDateCount + data.results[obj].release_dates.length
+  async function initialize() {
+    let dates = await store.getMediaDetails(route.params.type, route.params.id, 'release_dates')
+    for (let obj in dates.results) {
+      releaseDateCount = releaseDateCount + dates.results[obj].release_dates.length
     }
-    releaseDates.value = data.results
-    releaseDates.value = sortObjByKeys(releaseDates.value)
+    releaseDates.value = dates.results
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
   }
+
   onBeforeMount(() => {
-    if (!shared.value) {
-      store.getShared(route.params.type, route.params.id)
-    }
-    getReleaseDates(route.params.type, route.params.id)
+    initialize()
   })
 
-  function sortObjByKeys(unorderedObj) {
-    const ordered = Object.keys(unorderedObj)
-      .sort()
-      .reduce((obj, key) => {
-        obj[key] = unorderedObj[key]
-        return obj
-      }, {})
-    return ordered
-  }
+  // function sortObjByKeys(unorderedObj) {
+  //   const ordered = Object.keys(unorderedObj)
+  //     .sort()
+  //     .reduce((obj, key) => {
+  //       console.log(obj)
+  //       obj[key] = unorderedObj[key]
+  //       return obj
+  //     }, {})
+  //   return ordered
+  // }
   function scrollFocus(index) {
     window.scroll(0, focusElement.value[index].offsetTop)
   }
@@ -100,13 +94,7 @@
 
           <tr v-for="date in countries.release_dates" :key="date">
             <td class="date">
-              {{
-                new Date(date.release_date).toLocaleDateString('en-us', {
-                  day: 'numeric',
-                  month: 'numeric',
-                  year: 'numeric'
-                })
-              }}
+              {{ $d(date.release_date, 'short') }}
             </td>
             <td class="certification">{{ date.certification }}</td>
             <td class="type">{{ $t(typeOfReleaseDate(date.type)) }}</td>
@@ -238,6 +226,12 @@
   }
   tr {
     margin: 2px;
+  }
+  .date {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    width: max-content;
   }
   .certification {
     width: 170px;

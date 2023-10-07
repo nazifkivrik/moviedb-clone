@@ -1,60 +1,42 @@
 <script setup>
   import backToMain from '@/components/backToMain.vue'
-  import subNavigationBar from '@/components/subNavigationBar.vue'
-  import { useDbStore } from '@/stores/dbStore'
-  import { storeToRefs } from 'pinia'
-  import { inject, ref, onBeforeMount } from 'vue'
-  import { useRoute } from 'vue-router'
-  const options = inject('fetchOptions')
+import subNavigationBar from '@/components/subNavigationBar.vue'
+import { useDbStore } from '@/stores/dbStore'
+import { storeToRefs } from 'pinia'
+import { onBeforeMount, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { GroupBy } from '../../utils/functions'
   const store = useDbStore()
   const { shared } = storeToRefs(store)
   const route = useRoute()
   const episodes = ref()
   const episodeList = ref()
-  async function getEpisodes(id, seasonNumber) {
-    let episodes
-    const res = await fetch(
-      `https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}?language=en-US`,
-      options
-    )
-    const data = await res.json()
-    episodes = data.episodes
-    return episodes
-  }
+
   async function initialize() {
-    episodes.value = await getEpisodes(route.params.id, route.params.seasonNumber)
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
+    let res = await store.getEpisodes(
+      route.params.id,
+      route.params.seasonNumber,
+      localStorage.getItem('language')
+    )
+    episodes.value = res.episodes
     episodes.value.forEach((item) => {
-      item.crewGrouped = CrewFilterByDepartment(item.crew)
+      item.crewGrouped = GroupBy(item.crew, 'department')
     })
+    console.log(episodes.value[0].crewGrouped)
     episodes.value.forEach((item) => {
       for (const [key, value] of Object.entries(item.crewGrouped)) {
-        item.crewGrouped[key] = CrewFilterByName(value)
+        item.crewGrouped[key] = GroupBy(value, 'name')
       }
     })
+    console.log(episodes.value[0].crewGrouped)
   }
   onBeforeMount(() => {
     initialize()
   })
-  function CrewFilterByDepartment(array) {
-    let reduced = array.reduce((obj, item) => {
-      if (obj[item.department]) {
-        obj[item.department].push(item)
-      } else {
-        obj[item.department] = [item]
-      }
-      return obj
-    }, {})
-    return reduced
-  }
-  function CrewFilterByName(array) {
-    let reduced = array.reduce((obj, item) => {
-      item.job = Array(item.job)
-      obj[item.name] ? obj[item.name].job.push(...item.job) : (obj[item.name] = item)
-      return obj
-    }, {})
 
-    return reduced
-  }
   function expand(index) {
     episodeList.value[index].children[1].classList.toggle('hidden')
     console.log(
@@ -116,26 +98,22 @@
               <li>Report</li>
               <li>Edit</li>
             </ul>
-            <span class="castCrew">
-              <span class="crew" v-if="episode.crewGrouped.length > 0">
+            <span class="castCrew" v-if="episode.crewGrouped">
+              <span class="crew" v-if="episode.crewGrouped['Directing']">
                 <h3>
                   Crew <span class="count">{{ episode.crew.length }}</span>
                 </h3>
-                <strong>Directed by:</strong>
-                {{ Object.keys(episode.crewGrouped.Directing).toString() }}
+                <span v-if="episode.crewGrouped['Directing']">
+                  <strong>Directed by:</strong>
+                  {{ Object.keys(episode.crewGrouped.Directing).toString() }}
+                </span>
+                <span v-else> <strong>Directed by:</strong> No director has been added.</span>
                 <br />
-                <strong>Written by:</strong>
-                {{ Object.keys(episode.crewGrouped.Writing).toString() }}
-              </span>
-              <span class="crew" v-else>
-                <h3>
-                  Crew <span class="count">{{ episode.crew.length }}</span>
-                </h3>
-                <strong>Directed by:</strong>
-                No director has been added.
-                <br />
-                <strong>Written by:</strong>
-                No writer has been added.
+                <span v-if="episode.crewGrouped['Writing']">
+                  <strong>Written by:</strong>
+                  {{ Object.keys(episode.crewGrouped.Writing).toString() }}
+                </span>
+                <span v-else> <strong>Written by:</strong> No writer has been added. </span>
               </span>
 
               <span class="cast" v-if="episode.guest_stars.length > 0">

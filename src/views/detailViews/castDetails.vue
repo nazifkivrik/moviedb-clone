@@ -1,17 +1,20 @@
 <script setup>
-  import subNavigationBar from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
+  import subNavigationBar from '@/components/subNavigationBar.vue'
   import { useDbStore } from '@/stores/dbStore'
-  import { toRefs, onBeforeMount } from 'vue'
+  import { onBeforeMount, toRefs } from 'vue'
   import { useRoute } from 'vue-router'
   const route = useRoute()
   const store = useDbStore()
   const { shared } = toRefs(store)
+  async function initialize() {
+    if (!store.shared) {
+      store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
+  }
 
   onBeforeMount(() => {
-    if (!shared.value) {
-      store.getShared(route.params.type, route.params.id)
-    }
+    initialize()
   })
 </script>
 

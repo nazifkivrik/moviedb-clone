@@ -1,6 +1,13 @@
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
-
+import {
+  GroupBy,
+  SortBy,
+  filterObjectArray,
+  ageCalculator,
+  getRandomColor,
+  sortObjByKeys
+} from '@/utils/functions.js'
 const options = {
   method: 'GET',
   headers: {
@@ -8,26 +15,6 @@ const options = {
     Authorization:
       'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
   }
-}
-function sortByReleaseDates(a, b) {
-  if (a.release_date < b.release_date) {
-    return 1
-  }
-  if (a.release_date > b.release_date) {
-    return -1
-  }
-  return 0
-}
-function CrewFilterByDepartment(array) {
-  let reduced = array.reduce((obj, item) => {
-    if (obj[item.department]) {
-      obj[item.department].push(item)
-    } else {
-      obj[item.department] = [item]
-    }
-    return obj
-  }, {})
-  return reduced
 }
 
 function genderNumToStr(number) {
@@ -43,26 +30,6 @@ function genderNumToStr(number) {
   }
 }
 
-function ageCalculator(birthdate) {
-  const today = new Date()
-  const birthday = new Date(birthdate)
-  const age =
-    today.getFullYear() -
-    birthday.getFullYear() -
-    (today.getMonth() < birthday.getMonth() ||
-      (today.getMonth() === birthday.getMonth() && today.getDate() < birthday.getDate()))
-  return age
-}
-function compareByVote(a, b) {
-  if (a.vote_average < b.vote_average) {
-    return 1
-  }
-  if (a.vote_average > b.vote_average) {
-    return -1
-  }
-  return 0
-}
-
 function CrewFilterByName(array) {
   let reduced = array.reduce((obj, item) => {
     item.job = Array(item.job)
@@ -73,33 +40,6 @@ function CrewFilterByName(array) {
   return reduced
 }
 
-function sortObjByKeys(unorderedObj) {
-  const ordered = Object.keys(unorderedObj)
-    .sort()
-    .reduce((obj, key) => {
-      obj[key] = unorderedObj[key]
-      return obj
-    }, {})
-  return ordered
-}
-function getRandomColor() {
-  var letters = '01234567'.split('')
-  var color = '#'
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * letters.length)]
-  }
-  return color
-}
-function crewFilterByArray(crew) {
-  let arr = new Array()
-  let movieFilterArr = ['Director', 'Screenplay', 'Story', 'Writer', 'Novel']
-  crew.map((item) =>
-    movieFilterArr.forEach((filter) =>
-      item.job === filter ? arr.push({ name: item.name, job: item.job }) : ''
-    )
-  )
-  return arr
-}
 function languageFormatter(lang) {
   let languageFormat = new Intl.DisplayNames(['en'], { type: 'language' })
   return languageFormat.of(lang)
@@ -114,12 +54,14 @@ function currencyFormatter(cur) {
 export const useDbStore = defineStore('dbstore', () => {
   const shared = ref(null)
   const person = ref(null)
-  const language = ref(null)
+
   function resetStore() {
     shared.value = null
     person.value = null
   }
-
+  const language = computed(() => {
+    return localStorage.getItem('language')
+  })
   /**
    *
    * @param {type} type all,movie,person,tv
@@ -170,12 +112,66 @@ export const useDbStore = defineStore('dbstore', () => {
     const data = await response.json()
     return data
   }
+  async function searchMulti(query, language, page) {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/search/multi?query=${query}&include_adult=false&language=${language}&page=${page}`,
+      options
+    )
+    const data = await response.json()
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
+  }
+  async function searchMovie(query, language, page, primary_release_year, region, year) {
+    let url = `https://api.themoviedb.org/3/search/movie?query=${query}&include_adult=false&language=${language}&page=${page}`
+    if (primary_release_year) {
+      url += '&primary_release_year=' + primary_release_year
+    }
+    if (year) {
+      url += '&year=' + year
+    }
+    if (region) {
+      url += '&region=' + region
+    }
+    const response = await fetch(url, options)
+    const data = await response.json()
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
+  }
   async function getCountries(language) {
     const response = await fetch(
       `https://api.themoviedb.org/3/configuration/countries?language=${language}`,
       options
     )
     const data = await response.json()
+    return data
+  }
+  async function getMediaDetails(type, id, detailType) {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/${type}/${id}/${detailType}`,
+      options
+    )
+    const data = await response.json()
+    return data
+  }
+  async function getTVEpisodeGroupsDetails(episode_group_id) {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/tv/episode_group/${episode_group_id}`,
+      options
+    )
+    const data = await response.json()
+    return data
+  }
+  async function getYoutubeDetails(text) {
+    const response = await fetch(
+      `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails${text}key=AIzaSyBxAhdYttCBLgGAr-r_s-D535sC9hgoI7o`
+    )
+    const data = await response.json()
+    return data
+  }
+  async function getEpisodes(id, seasonNumber, language) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}?language=${language}`,
+      options
+    )
+    const data = await res.json()
     return data
   }
   async function getShared(type, id, language) {
@@ -191,8 +187,15 @@ export const useDbStore = defineStore('dbstore', () => {
       'url(' + `https://image.tmdb.org/t/p/w1920_and_h800_multi_faces${data.backdrop_path}` + ')'
 
     shared.value.color = getRandomColor()
-    shared.value.reduced = CrewFilterByName(crewFilterByArray(shared.value.credits.crew))
-    shared.value.credits.crew = CrewFilterByDepartment(shared.value.credits.crew)
+    shared.value.reduced = CrewFilterByName(
+      filterObjectArray(
+        shared.value.credits.crew,
+        ['Director', 'Screenplay', 'Story', 'Writer', 'Novel'],
+        'job'
+      )
+    )
+
+    shared.value.credits.crew = GroupBy(shared.value.credits.crew, 'department')
     let crewCount = 0
     for (const obj in shared.value.credits.crew) {
       crewCount = crewCount + shared.value.credits.crew[obj].length
@@ -207,19 +210,14 @@ export const useDbStore = defineStore('dbstore', () => {
     }
 
     shared.value.videos = shared.value.videos.results
-    getMedia(type, id)
+    let images = await getMediaDetails(type, id, 'images')
+    images.posters = SortBy(images.posters, 'vote_average')
+    images.backdrops = SortBy(images.backdrops, 'vote_average')
+    shared.value.backdrops = images.backdrops
+    shared.value.posters = images.posters
+    shared.value.logos = images.logos
   }
 
-  async function getMedia(type, id) {
-    const response = await fetch(`https://api.themoviedb.org/3/${type}/${id}/images`, options)
-    const data = await response.json()
-    data.backdrops = data.backdrops.sort(compareByVote)
-    data.posters = data.posters.sort(compareByVote)
-
-    shared.value.backdrops = data.backdrops
-    shared.value.posters = data.posters
-    shared.value.logos = data.logos
-  }
   async function getPerson(id) {
     const response = await fetch(
       `https://api.themoviedb.org/3/person/${id}?append_to_response=images,external_ids,combined_credits,movie_credits,tv_credits&language=en-US`,
@@ -228,13 +226,14 @@ export const useDbStore = defineStore('dbstore', () => {
     const data = await response.json()
     person.value = data
     person.value.profiles = data.images.profiles
-    person.value.movie_credits.crew.sort(sortByReleaseDates)
-    person.value.movie_credits.cast.sort(sortByReleaseDates)
-    person.value.tv_credits.crew.sort(sortByReleaseDates)
-    person.value.tv_credits.cast.sort(sortByReleaseDates)
-    person.value.movie_credits.crew = CrewFilterByDepartment(person.value.movie_credits.crew)
-    person.value.tv_credits.crew = CrewFilterByDepartment(person.value.tv_credits.crew)
-    person.value.combined_credits.crew = CrewFilterByDepartment(person.value.combined_credits.crew)
+    person.value.movie_credits.crew = SortBy(person.value.movie_credits.crew, 'release_date')
+    person.value.movie_credits.crew = SortBy(person.value.movie_credits.crew, 'release_date')
+    person.value.movie_credits.cast = SortBy(person.value.movie_credits.cast, 'release_date')
+    person.value.tv_credits.crew = SortBy(person.value.tv_credits.crew, 'release_date')
+    person.value.tv_credits.cast = SortBy(person.value.tv_credits.cast)
+    person.value.movie_credits.crew = GroupBy(person.value.movie_credits.crew, 'department')
+    person.value.tv_credits.crew = GroupBy(person.value.tv_credits.crew, 'department')
+    person.value.combined_credits.crew = GroupBy(person.value.combined_credits.crew, 'department')
 
     let departmentArr
     person.value.movie_credits.cast || person.value.tv_credits.cast
@@ -250,12 +249,19 @@ export const useDbStore = defineStore('dbstore', () => {
     person.value.departments = departmentArr
     person.value.gender = genderNumToStr(person.value.gender)
     person.value.age = ageCalculator(person.value.birthday)
-    console.log(person.value)
   }
 
-  function imageURL(size, path) {
+  function imageURL(size, path, type) {
     const baseURL = 'https://image.tmdb.org/t/p/'
-    return baseURL + size + path
+
+    if (path !== '') {
+      return baseURL + size + path
+    } else {
+      if (type === 'person') {
+        return 'https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg'
+      } else
+        return 'https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg'
+    }
   }
 
   return {
@@ -265,12 +271,17 @@ export const useDbStore = defineStore('dbstore', () => {
     getList,
     getLanguages,
     getCountries,
+    searchMulti,
+    searchMovie,
     Discover,
     shared,
     getShared,
     person,
     getPerson,
-    getMedia,
+    getMediaDetails,
+    getTVEpisodeGroupsDetails,
+    getYoutubeDetails,
+    getEpisodes,
     imageURL
   }
 })

@@ -3,79 +3,36 @@
   import { useDbStore } from '@/stores/dbStore'
   import subNav from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
-  import { toRefs, computed, ref, onBeforeMount, watch } from 'vue'
-  const youtubeDetails = ref(null)
+  import { toRefs, computed, onBeforeMount } from 'vue'
   const route = useRoute()
   const store = useDbStore()
   const { shared } = toRefs(store)
+  import { GroupBy, iso8601 } from '@/utils/functions'
   const filteredVideos = computed(() => {
     if (shared.value) {
-      return filterByVideoType(shared.value.videos)
+      return GroupBy(shared.value.videos, 'type')
     } else return null
   })
-  const text = computed(() => {
-    if (shared.value) {
-      return youtubeIdText(shared.value.videos)
-    } else return null
-  })
-  function filterByVideoType(array) {
-    let reduced = array.reduce((obj, item) => {
-      if (obj[item.type]) {
-        obj[item.type].push(item)
-      } else {
-        obj[item.type] = [item]
-      }
-      return obj
-    }, {})
-    return reduced
-  }
-  function youtubeIdText(videoArr) {
-    let text = '&'
-    videoArr.forEach((item) => {
-      text = text + `id=${item.key}&`
+
+  async function initialize() {
+    let youtubeIDs = '&'
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
+    shared.value.videos.forEach((item) => {
+      youtubeIDs += `id=${item.key}&`
     })
-    return text
-  }
-  async function getYoutubeDetails(text) {
-    const response = await fetch(
-      `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails${text}key=AIzaSyBxAhdYttCBLgGAr-r_s-D535sC9hgoI7o`
-    )
-    const data = await response.json()
-    youtubeDetails.value = data
-  }
-
-  function iso8601(duration) {
-    let hour, minute, second
-    if (duration.includes('H')) {
-      hour = duration.substring(duration.indexOf('T') + 1, duration.indexOf('H'))
-      minute = duration.substring(duration.indexOf('H') + 1, duration.indexOf('M'))
-      second = duration.substring(duration.indexOf('M') + 1, duration.indexOf('S'))
-
-      return hour + ':' + minute + ':' + second
-    } else if (!duration.includes('H') && duration.includes('M')) {
-      minute = duration.substring(duration.indexOf('T') + 1, duration.indexOf('M'))
-      second = duration.substring(duration.indexOf('M') + 1, duration.indexOf('S'))
-      return minute + ':' + second
-    } else {
-      second = duration.substring(duration.indexOf('T') + 1, duration.indexOf('S'))
-      return '0:' + second
-    }
-  }
-  watch(
-    () => youtubeDetails.value,
-    () => {
-      for (let index = 0; index < youtubeDetails.value.items.length; index++) {
-        if (shared.value.videos[index].key === youtubeDetails.value.items[index].id) {
-          shared.value.videos[index].youtubeDetails = youtubeDetails.value.items[index]
-        }
+    let res = await store.getYoutubeDetails(youtubeIDs)
+    for (let index = 0; index < res.items.length; index++) {
+      if (shared.value.videos[index].key === res.items[index].id) {
+        shared.value.videos[index].youtubeDetails = res.items[index]
       }
     }
-  )
-  watch(
-    () => text.value,
-    () => getYoutubeDetails(text.value)
-  )
-  onBeforeMount(() => {})
+  }
+
+  onBeforeMount(() => {
+    initialize()
+  })
 </script>
 
 <template>
@@ -125,16 +82,7 @@
                   <p>{{ video.type }} &#x2022;</p>
                   <p>{{ iso8601(video.youtubeDetails.contentDetails.duration) }} &#x2022;</p>
                   <p>
-                    {{
-                      new Date(video.youtubeDetails.snippet.publishedAt).toLocaleDateString(
-                        'en-us',
-                        {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        }
-                      )
-                    }}
+                    {{ $d(video.youtubeDetails.snippet.publishedAt, 'short') }}
                   </p>
                 </div>
                 <div class="description">

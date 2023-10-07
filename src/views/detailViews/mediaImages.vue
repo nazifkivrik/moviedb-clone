@@ -1,56 +1,41 @@
 <script setup>
-  import subNav from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
-  import { onBeforeMount, ref, computed, inject } from 'vue'
-  import { useDbStore } from '@/stores/dbStore'
-  import { useRoute } from 'vue-router'
-  import { storeToRefs } from 'pinia'
+import subNav from '@/components/subNavigationBar.vue'
+import { useDbStore } from '@/stores/dbStore'
+import { GroupBy } from '@/utils/functions.js'
+import { storeToRefs } from 'pinia'
+import { computed, onBeforeMount, ref } from 'vue'
+import { useRoute } from 'vue-router'
   const store = useDbStore()
-  const options = inject('fetchOptions')
   const { shared, person } = storeToRefs(store)
   const languages = ref(null)
   const route = useRoute()
   const selectedOption = ref('en')
   const filteredImages = computed(() => {
     if (route.params.images === 'backdrops') {
-      return filterByLanguage(shared.value.backdrops)
+      return GroupBy(shared.value.backdrops, 'iso_639_1')
     } else if (route.params.images === 'logos') {
-      return filterByLanguage(shared.value.logos)
+      return GroupBy(shared.value.logos, 'iso_639_1')
     } else {
-      return filterByLanguage(shared.value.posters)
+      return GroupBy(shared.value.posters, 'iso_639_1')
     }
   })
 
-  onBeforeMount(() => {
-    iso_639_1_languages()
-  })
-  async function iso_639_1_languages() {
-    const response = await fetch('https://api.themoviedb.org/3/configuration/languages', options)
-    const data = await response.json()
-    languages.value = data
+  async function initialize() {
+    languages.value = await store.getLanguages()
+    if (!store.shared) {
+      store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
   }
-  function convertLanguage(key) {
-    function checklanguage(obj) {
-      return obj.iso_639_1 == key
-    }
+  onBeforeMount(() => {
+    initialize()
+  })
 
-    let matched = languages.value.find(checklanguage)
+  function convertLanguage(key) {
+    let matched = languages.value.find((obj) => obj.iso_639_1 == key)
     if (matched) {
       return matched.english_name
     } else return 'No Language'
-  }
-
-  function filterByLanguage(array) {
-    let reduced = array.reduce((obj, item) => {
-      if (obj[item.iso_639_1]) {
-        obj[item.iso_639_1].push(item)
-      } else {
-        obj[item.iso_639_1] = [item]
-      }
-      return obj
-    }, {})
-
-    return reduced
   }
 </script>
 

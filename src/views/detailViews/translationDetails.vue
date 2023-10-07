@@ -1,38 +1,30 @@
 <script setup>
-  import subNav from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
-  import { useRoute } from 'vue-router'
-  import { onBeforeMount, ref, inject, toRefs } from 'vue'
+  import subNav from '@/components/subNavigationBar.vue'
   import { useDbStore } from '@/stores/dbStore'
-
+  import { minuteToFull } from '@/utils/functions.js'
+  import { onBeforeMount, ref, toRefs } from 'vue'
+  import { useRoute } from 'vue-router'
   const route = useRoute()
   const store = useDbStore()
-  const options = inject('fetchOptions')
   const { shared } = toRefs(store)
   const focusElement = ref(null)
   const translations = ref(null)
   let translationCount
 
-  async function getTranslations(type, id) {
-    const response = await fetch(
-      `https://api.themoviedb.org/3/${type}/${id}/translations`,
-
-      options
-    )
-    const data = await response.json()
-
-    translations.value = data.translations
+  async function initialize() {
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
+    let res = await store.getMediaDetails(route.params.type, route.params.id, 'translations')
+    translations.value = res.translations
     translationCount = translations.value.length
   }
   onBeforeMount(() => {
-    getTranslations(route.params.type, route.params.id)
+    initialize()
   })
   function scrollFocus(index) {
     window.scroll(0, focusElement.value[index].offsetTop)
-  }
-  function runtimeChange(runtime) {
-    if (runtime != 0) return Math.floor(runtime / 60) + 'h ' + (runtime % 60) + 'm'
-    else return '-'
   }
 </script>
 
@@ -79,7 +71,7 @@
           </tr>
           <tr>
             <td v-if="route.params.type === 'movie'" style="width: 70px">
-              {{ runtimeChange(languages.data.runtime) }}
+              {{ minuteToFull(languages.data.runtime) }}
             </td>
 
             <td>
@@ -154,8 +146,11 @@
     .translationSum {
       margin-left: 10vw;
       margin-top: 30px;
-      width: 210px;
+
       position: relative;
+      box-shadow:
+        5px 5px 10px 0 #edededff,
+        -5px -5px 10px 0 #edededff;
       h2 {
         width: 210px;
         padding: 12px;
@@ -172,7 +167,6 @@
         list-style: none;
         padding-inline-start: 0;
         padding-left: 12px;
-        width: 210px;
         li {
           margin-bottom: 15px;
           font-weight: 400;
@@ -181,7 +175,7 @@
       }
       .translationCount {
         position: absolute;
-        right: 0;
+        right: 10px;
         font-weight: 300;
       }
     }
@@ -195,7 +189,7 @@
   }
   table {
     text-align: left;
-    width: calc(100% - 350px);
+    width: 100%;
     margin: 20px;
     border-radius: 10px;
     box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.1);
