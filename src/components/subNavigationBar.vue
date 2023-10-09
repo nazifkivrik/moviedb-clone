@@ -1,7 +1,7 @@
 <script setup>
   const store = useDbStore()
   import { useDbStore } from '../stores/dbStore'
-  import { ref, toRefs, onBeforeMount, computed } from 'vue'
+  import { ref, onBeforeMount, computed } from 'vue'
   const { shared, person } = storeToRefs(store)
   const route = useRoute()
   import appLink from './appLink.vue'
@@ -15,18 +15,11 @@
     } else return null
   })
   const videoTypeItem = ref(null)
-  function filterByVideoType(array) {
-    let reduced = array.reduce((obj, item) => {
-      if (obj[item.type]) {
-        obj[item.type].push(item)
-      } else {
-        obj[item.type] = [item]
-      }
-      return obj
-    }, {})
-    return reduced
-  }
 
+  // async function initialize() {
+  //   console.log(media.value)
+  //   console.log(media.value.videos)
+  // }
   let headers
   function menuItems(type) {
     switch (type) {
@@ -56,6 +49,10 @@
         return { overview: { translations: 'Translations' }, media: { profiles: 'Profiles' } }
     }
   }
+  // watch(
+  //   () => media.value,
+  //   () => initialize()
+  // )
   onBeforeMount(() => {
     headers = menuItems(route.params.type)
   })
@@ -102,25 +99,22 @@
                 </template>
               </li>
 
-              <template v-if="shared">
+              <template v-if="media">
                 <li class="videoWrapper">
                   {{ $t('Videos') }}
                   <span class="count"><icon-lib icon="fa-solid fa-caret-right" /></span>
                   <div>
                     <ul class="videoTypes container">
-                      <template v-if="shared.videos">
-                        <li
-                          v-for="type in Object.keys(filterByVideoType(shared.videos))"
-                          :key="type"
-                          ref="videoTypeItem">
+                      <template v-if="media.videos">
+                        <li v-for="(type, key) in media.videos" :key="key" ref="videoTypeItem">
                           <appLink
                             :to="{
                               path:
                                 '/' + $route.params.type + '/' + $route.params.id + '/' + 'videos',
-                              query: { selectedType: type }
+                              query: { selectedType: key }
                             }">
-                            {{ $t(type) }}</appLink
-                          >
+                            {{ $t(key) }} <span class="count">{{ type.length }}</span>
+                          </appLink>
                         </li>
                       </template>
                     </ul>
@@ -155,7 +149,7 @@
   </template>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
   .subNav {
     display: flex;
     flex-direction: row;
@@ -212,7 +206,7 @@
   .container {
     background-color: white;
     border-radius: 5px;
-    padding: 15px;
+    padding: 15px 0;
     width: 10em;
     position: relative;
   }
@@ -240,8 +234,8 @@
 
   .videoTypes {
     position: absolute;
-    left: 10em;
-    top: 20px;
+    right: -10em;
+    top: 15px;
   }
 
   .Menus {

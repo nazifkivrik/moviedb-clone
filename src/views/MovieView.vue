@@ -1,37 +1,50 @@
 <script setup>
+  import AppLink from '@/components/appLink.vue'
+  import mediaCarosuel from '@/components/mediaCarosuel.vue'
+  import movieViewBanner from '@/components/movieViewBanner.vue'
   import movieViewDetailed from '@/components/movieViewDetailedInfo.vue'
+  import peopleCarosuel from '@/components/peopleCarosuel.vue'
+  import subNav from '@/components/subNavigationBar.vue'
+  import { useDbStore } from '@/stores/dbStore'
   import { storeToRefs } from 'pinia'
   import { useRoute } from 'vue-router'
-  import AppLink from '../components/appLink.vue'
-  import mediaCarosuel from '../components/mediaCarosuel.vue'
-  import movieViewBanner from '../components/movieViewBanner.vue'
-  import peopleCarosuel from '../components/peopleCarosuel.vue'
-  import subNav from '../components/subNavigationBar.vue'
-  import { useDbStore } from '../stores/dbStore'
+  import { onBeforeMount } from 'vue'
+  import { SortBy, GroupBy } from '@/utils/functions'
+
   const store = useDbStore()
   const { shared } = storeToRefs(store)
-
   const route = useRoute()
+  async function initialize() {
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
+
+  }
+  onBeforeMount(() => {
+    initialize()
+  })
 </script>
 
 <template>
   <subNav />
   <main>
-    <div class="player" v-if="route.query.name"><router-view></router-view></div>
-    <movieViewBanner />
-    <div class="detailedInfo" v-if="shared">
-      <div class="whiteColumn">
-        <peopleCarosuel :cast="shared.credits.cast" />
+    <template v-if="shared">
+      <div class="player" v-if="route.query.name"><router-view></router-view></div>
+      <movieViewBanner />
+      <div class="detailedInfo">
+        <div class="whiteColumn">
+          <peopleCarosuel :cast="shared.credits.cast" />
 
-        <div class="showFullCast">
-          <AppLink :to="`/${$route.params.type}/${$route.params.id}/cast`">{{
-            $t('Full Cast&Crew')
-          }}</AppLink>
+          <div class="showFullCast">
+            <AppLink :to="`/${$route.params.type}/${$route.params.id}/cast`">{{
+              $t('Full Cast&Crew')
+            }}</AppLink>
+          </div>
+          <mediaCarosuel />
         </div>
-        <mediaCarosuel />
+        <movieViewDetailed class="greyCol" />
       </div>
-      <movieViewDetailed class="greyCol" />
-    </div>
+    </template>
   </main>
 </template>
 

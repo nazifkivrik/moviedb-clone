@@ -4,10 +4,12 @@
   import { useRoute } from 'vue-router'
   import { useDbStore } from '@/stores/dbStore.js'
   import { debounce } from 'lodash'
+  import { filterList } from '@/utils/functions.js'
   const options = inject('fetchOptions')
   const store = useDbStore()
   const route = useRoute()
   const emits = defineEmits(['discover'])
+  const language = localStorage.getItem('language')
   const countries = ref()
   const sortOptions = [
     { en: 'Popularity Descending', text: 'popularity.desc' },
@@ -23,7 +25,7 @@
   const collapseSort = ref(true)
   const collapseWatch = ref(true)
   const collapseFilters = ref(false)
-
+  const genres = ref()
   const searchAllEpisodes = ref(true)
   const searchFirstAirDate = ref(true)
 
@@ -45,16 +47,20 @@
     WatchProviders: []
   })
   async function initialOptions(obj) {
-    let lang = navigator.language
-    getAvailableRegions(lang)
-    getGenres(lang)
-    await getCountries(lang)
-    await getWatchProviders(lang, lang.split('-')[1])
+    availableRegions.value = filteredRegions.value = await store.getAvailableRegions(language)
+    genres.value = await store.getGenres(language)
+    countries.value = await store.getCountries(language)
+    watchProviders.value = await store.getWatchProviders(
+      'tv',
+      language,
+      discoverOptions.Region.iso_3166_1
+    )
     countries.value.forEach((item) => {
-      if (item.iso_3166_1 === lang.split('-')[1]) {
+      if (item.iso_3166_1 === language.split('-')[1]) {
         obj.Region = item
       }
     })
+    languages.value = filteredLanguages.value = await store.getLanguages()
     switch (route.query.query) {
       case 'popular': {
         let dateTo = new Date()
@@ -100,36 +106,19 @@
     e.className = 'passive'
     array.length = 0
   }
-  async function getCountries(language) {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/configuration/countries?language=${language}`,
-      options
-    )
-    const data = await res.json()
-    countries.value = data
-  }
+
   //#region Companies
   const searchedCompanies = ref([])
   const companySearchString = ref('')
 
-  async function getCompanies(string, page) {
-    let obj
-    const res = await fetch(
-      `https://api.themoviedb.org/3/search/company?query=${string}&page=${page}`,
-      options
-    )
-    const data = await res.json()
-    obj = data
-    return obj
-  }
   watch(
     () => companySearchString.value,
     () => getNewCompanyPage()
   )
   async function getNewCompanyPage() {
-    let companies = await getCompanies(companySearchString.value, '1')
-    searchedCompanies.value = companies.results
-    currentCompaniesPage = companies.page
+    let companies = await store.searchCompany(companySearchString.value, '1')
+    searchedCompanies.value = companies.array
+    currentCompaniesPage = companies.currentPage
     totalCompaniesPage = companies.total_pages
   }
   let currentCompaniesPage
@@ -137,10 +126,13 @@
   const getCompanyPagesLazyDebounced = debounce(async function getCompanyPagesLazy(event) {
     if (event.target.scrollHeight - event.target.scrollTop < 500) {
       if (currentCompaniesPage < totalCompaniesPage) {
-        let companies = await getCompanies(companySearchString.value, currentCompaniesPage + 1)
+        let companies = await store.searchCompany(
+          companySearchString.value,
+          currentCompaniesPage + 1
+        )
 
-        companies.results.forEach((item) => searchedCompanies.value.push(item))
-        currentCompaniesPage = companies.page
+        companies.array.forEach((item) => searchedCompanies.value.push(item))
+        currentCompaniesPage = companies.currentPage
         totalCompaniesPage = companies.total_pages
       }
     }
@@ -201,98 +193,45 @@
   const filteredRegions = ref()
   const availableRegions = ref()
   const watchProviders = ref()
-  async function getAvailableRegions(language) {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/watch/providers/regions?language=${language}`,
-      options
-    )
-    const data = await res.json()
-    availableRegions.value = data.results
-    filteredRegions.value = data.results
-  }
-  async function getWatchProviders(language, region) {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/watch/providers/tv?language=${language}&watch_region=${region}`,
-      options
-    )
-    const data = await res.json()
-    watchProviders.value = data.results
-  }
+
   watch(
     () => filterRegionsString.value,
-    () => filterRegions()
+    () =>
+      (filteredRegions.value = filterList(
+        availableRegions.value,
+        'english_name',
+        filterRegionsString.value
+      ))
   )
 
-  function filterRegions() {
-    let arr = []
-    availableRegions.value.forEach((item) => {
-      if (item.english_name.toLowerCase().search(filterRegionsString.value.toLowerCase()) != -1) {
-        arr.push(item)
-      }
-    })
-    filteredRegions.value = arr
-  }
-
-  //#endregion
-  //#region Genres
-  const genres = ref()
-
-  async function getGenres(language) {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/genre/movie/list?language=${language}`,
-      options
-    )
-    const data = await res.json()
-    genres.value = data.genres
-  }
   //#endregion
   //#region Languages
   const filterLanguageString = ref('')
   const languages = ref()
   const filteredLanguages = ref()
-
-  async function getLanguages() {
-    const res = await fetch('https://api.themoviedb.org/3/configuration/languages', options)
-    const data = await res.json()
-    languages.value = data
-    filteredLanguages.value = data
-  }
   watch(
     () => filterLanguageString.value,
-    () => filterLanguages()
+    () =>
+      (filteredLanguages.value = filterList(
+        languages.value,
+        'english_name',
+        filterLanguageString.value
+      ))
   )
-  function filterLanguages() {
-    let arr = []
-    languages.value.forEach((item) => {
-      if (item.english_name.toLowerCase().search(filterLanguageString.value.toLowerCase()) != -1) {
-        arr.push(item)
-      }
-    })
-    filteredLanguages.value = arr
-  }
   //#endregion
   //#region Keywords
   const searchedKeywords = ref([])
   const keywordsContainer = ref()
   const keywordSearchString = ref('')
-  async function getKeywords(string, page) {
-    let obj
-    const res = await fetch(
-      `https://api.themoviedb.org/3/search/keyword?query=${string}&page=${page}`,
-      options
-    )
-    const data = await res.json()
-    obj = data
-    return obj
-  }
+
   watch(
     () => keywordSearchString.value,
     () => getNewKeywordPage()
   )
   async function getNewKeywordPage() {
-    let keywords = await getKeywords(keywordSearchString.value, '1')
-    searchedKeywords.value = keywords.results
-    currentKeywordPage = keywords.page
+    let keywords = await store.searchKeyword(keywordSearchString.value, '1')
+    searchedKeywords.value = keywords.array
+    currentKeywordPage = keywords.currentPage
     totalKeywordPage = keywords.total_pages
   }
   let currentKeywordPage
@@ -300,20 +239,17 @@
   const getKeywordPagesLazyDebounced = debounce(async function getKeywordPagesLazy(event) {
     if (event.target.scrollHeight - event.target.scrollTop < 500) {
       if (currentKeywordPage < totalKeywordPage) {
-        let keywords = await getKeywords(keywordSearchString.value, currentKeywordPage + 1)
+        let keywords = await store.searchKeyword(keywordSearchString.value, currentKeywordPage + 1)
 
-        keywords.results.forEach((item) => searchedKeywords.value.push(item))
-        currentKeywordPage = keywords.page
+        keywords.array.forEach((item) => searchedKeywords.value.push(item))
+        currentKeywordPage = keywords.currentPage
         totalKeywordPage = keywords.total_pages
       }
     }
   }, 150)
   //#endregion
   onBeforeMount(() => {
-    getLanguages()
-
     initialOptions(discoverOptions)
-    filteredRegions.value = availableRegions.value
   })
 </script>
 
@@ -322,13 +258,14 @@
     <ul>
       <li :class="[collapseSort ? 'collapse' : 'grow', 'sort']">
         <h2 @click="() => (collapseSort = !collapseSort)">
-          Sort <icon-lib :icon="['fas', collapseSort ? 'angle-right' : 'angle-down']"></icon-lib>
+          {{ $t('Sort') }}
+          <icon-lib :icon="['fas', collapseSort ? 'angle-right' : 'angle-down']"></icon-lib>
         </h2>
-        <h4>Sort Results By</h4>
+        <h4>{{ $t('Sort Results By') }}</h4>
 
         <ul class="collapse" v-click-outside="(e) => e.classList.add('collapse')">
           <h3 @click="(e) => e.target.parentElement.classList.toggle('collapse')">
-            {{ discoverOptions.SortOpt.en }}
+            {{ $t(discoverOptions.SortOpt.en) }}
             <icon-lib icon="fa-caret-down"></icon-lib>
           </h3>
           <li
@@ -343,10 +280,10 @@
       <li>
         <div :class="[collapseWatch ? 'collapse' : '', 'whereToWatch']">
           <h2 @click="collapseWatch = !collapseWatch">
-            Where To Watch
+            {{ $t('Where To Watch') }}
             <icon-lib :icon="['fas', collapseWatch ? 'angle-right' : 'angle-down']"></icon-lib>
           </h2>
-          <h4>Country</h4>
+          <h4>{{ $t('Country') }}</h4>
           <div class="collapse" v-click-outside="(e) => e.classList.add('collapse')">
             <h3 @click="(e) => e.target.parentElement.classList.toggle('collapse')">
               <span :class="'fi fi-' + discoverOptions.Region.iso_3166_1.toLowerCase()"></span>
@@ -388,19 +325,19 @@
 
       <li class="filters">
         <h2 @click="collapseFilters = !collapseFilters">
-          Filters
+          {{ $t('Filters') }}
           <icon-lib :icon="['fas', !collapseFilters ? 'angle-right' : 'angle-down']"></icon-lib>
         </h2>
 
         <ul v-if="collapseFilters">
           <li>
-            <h4>Availabilities</h4>
+            <h4>{{ $t('Availabilities') }}</h4>
             <input
               type="checkbox"
               id="searchAllAvailabilities"
               v-model="discoverOptions.searchAllAvailabilities"
               @change="(e) => (e.target.checked ? (discoverOptions.Availabilities = []) : '')" />
-            <label for="searchAllAvailabilities">Search all availabilities?</label>
+            <label for="searchAllAvailabilities">{{ $t('Search all availabilities?') }}</label>
             <template v-if="!discoverOptions.searchAllAvailabilities">
               <div v-for="item in availabilities" :key="item">
                 <input
@@ -408,23 +345,23 @@
                   :id="item"
                   @change="setSelectedAvailabilities(item)"
                   :checked="discoverOptions.Availabilities.includes(item)" />
-                <label :for="item">{{ item }}</label>
+                <label :for="item">{{ $t(item) }}</label>
               </div>
             </template>
           </li>
           <li class="airDates">
-            <h4>Air Dates</h4>
+            <h4>{{ $t('Air Dates') }}</h4>
             <div>
               <input type="checkbox" id="searchAllEpisodes" v-model="searchAllEpisodes" />
-              <label for="searchAllEpisodes">Search all episodes</label>
+              <label for="searchAllEpisodes">{{ $t('Search all episodes') }}</label>
             </div>
             <div v-if="!searchAllEpisodes">
               <input type="checkbox" id="searchFirstAirDate" v-model="searchFirstAirDate" />
-              <label for="searchFirstAirDate">Search first air date</label>
+              <label for="searchFirstAirDate">{{ $t('Search first air date') }}</label>
             </div>
 
             <div class="date">
-              <label for="dateFrom">From</label>
+              <label for="dateFrom">{{ $t('From') }}</label>
               <input
                 type="date"
                 id="dateFrom"
@@ -432,12 +369,12 @@
                 v-model="discoverOptions.DateFrom" />
             </div>
             <div class="date">
-              <label for="dateTo">To</label>
+              <label for="dateTo">{{ $t('To') }}</label>
               <input type="date" id="dateTo" placeholder="''" v-model="discoverOptions.DateTo" />
             </div>
           </li>
           <li class="genres">
-            <h4>Genres</h4>
+            <h4>{{ $t('Genres') }}</h4>
             <ul>
               <li
                 v-for="genre in genres"
@@ -449,7 +386,7 @@
             </ul>
           </li>
           <li class="companies">
-            <h4>Network</h4>
+            <h4>{{ $t('Network') }}</h4>
             <ul class="selectedCompanies">
               <li v-for="company in discoverOptions.Networks" :key="company">
                 {{ company.name }}
@@ -485,7 +422,7 @@
             </ul>
           </li>
           <li class="language">
-            <h4>Language</h4>
+            <h4>{{ $t('Language') }}</h4>
             <div class="collapse" v-click-outside="(e) => e.classList.add('collapse')">
               <h3 @click="(e) => e.target.parentElement.classList.toggle('collapse')">
                 {{ discoverOptions.Language.english_name }}
@@ -511,7 +448,7 @@
             </div>
           </li>
           <li class="userScore">
-            <h4>User Score</h4>
+            <h4>{{ $t('User Score') }}</h4>
             <dualSlider
               :min="0"
               :max="10"
@@ -519,7 +456,7 @@
               @valArray="(obj) => (discoverOptions.UserScore = obj)" />
           </li>
           <li class="minimumUserVotes">
-            <h4>Minimum User Votes</h4>
+            <h4>{{ $t('Minimum User Votes') }}</h4>
             <input
               type="range"
               min="0"
@@ -532,7 +469,7 @@
             </div>
           </li>
           <li class="runtime">
-            <h4>Runtime</h4>
+            <h4>{{ $t('Runtime') }}</h4>
             <dualSlider
               :min="0"
               :max="400"
@@ -540,7 +477,7 @@
               @valArray="(obj) => (discoverOptions.Runtime = obj)" />
           </li>
           <li class="keywords">
-            <h4>Keywords</h4>
+            <h4>{{ $t('Keywords') }}</h4>
             <ul class="selectedKeywords">
               <li v-for="keyword in discoverOptions.Keywords" :key="keyword">
                 {{ keyword }}

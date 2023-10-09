@@ -2,15 +2,24 @@
   import backToMain from '@/components/backToMain.vue'
   import subNavigationBar from '@/components/subNavigationBar.vue'
   import { useDbStore } from '@/stores/dbStore'
-  import { onBeforeMount, toRefs } from 'vue'
+  import { onBeforeMount, toRefs, ref } from 'vue'
   import { useRoute } from 'vue-router'
+  import { GroupBy, GroupObject, sortObjByKeys } from '@/utils/functions'
   const route = useRoute()
   const store = useDbStore()
   const { shared } = toRefs(store)
+  const crews = ref()
+  const crewCount = ref()
   async function initialize() {
     if (!store.shared) {
-      store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
     }
+    crewCount.value = shared.value.credits.crew.length
+    crews.value = GroupBy(shared.value.credits.crew, 'department')
+    for (const obj in crews.value) {
+      crews.value[obj] = GroupObject(crews.value[obj], 'name', 'job')
+    }
+    crews.value = sortObjByKeys(crews.value)
   }
 
   onBeforeMount(() => {
@@ -50,13 +59,10 @@
 
         <div class="Crew">
           <h2 class="header">
-            {{ $t('Crew') }} <span class="count">{{ shared.crewCount }}</span>
+            {{ $t('Crew') }} <span class="count">{{ crewCount }}</span>
           </h2>
           <ol>
-            <li
-              v-for="(members, department) in shared.credits.crew"
-              :key="members"
-              class="departments">
+            <li v-for="(members, department) in crews" :key="members" class="departments">
               {{ $t(department) }}
               <ol>
                 <li v-for="crewMember in members" :key="crewMember" class="crewMember">

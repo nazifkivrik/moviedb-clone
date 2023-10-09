@@ -1,31 +1,40 @@
 <script setup>
-  import { useDbStore } from '../stores/dbStore'
-  import { storeToRefs } from 'pinia'
-  import { useRoute } from 'vue-router'
-  import { onBeforeMount, ref, onMounted, computed, watch } from 'vue'
-  import rate from '../components/rateChart.vue'
-  const isMobile = ref(window.innerWidth)
-  const store = useDbStore()
   import movieViewBannerMobile from '@/components/movieViewBannerMobile.vue'
+  import rate from '@/components/rateChart.vue'
+  import { minuteToFull, GroupObject, filterObjectArray } from '@/utils/functions.js'
+  import { storeToRefs } from 'pinia'
+  import { onBeforeMount, ref, watch } from 'vue'
+  import { useRoute } from 'vue-router'
+  import { useDbStore } from '../stores/dbStore'
+
+  const store = useDbStore()
   const { shared } = storeToRefs(store)
-  function genreAndDuration(shared) {
-    let text = ''
+  const filteredCast = ref()
+  function genres(shared) {
     let arr = new Array()
-    shared.genres.map((element) => {
-      arr.push(element.name)
-    })
-    if (shared.runtime) {
-      text =
-        arr.toString() + ' • ' + Math.floor(shared.runtime / 60) + 'h' + (shared.runtime % 60) + 'm'
+    shared.genres.forEach((item) => arr.push(item.name))
+    return arr.join(', ')
+  }
+  async function initialize() {
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
     } else {
-      text = arr.toString()
+      filteredCast.value = await GroupObject(
+        filterObjectArray(
+          shared.value.credits.crew,
+          ['Director', 'Screenplay', 'Story', 'Writer', 'Novel'],
+          'job'
+        ),
+        'name',
+        'job'
+      )
     }
-    return text
   }
   const route = useRoute()
   let isMovie
 
   onBeforeMount(() => {
+    initialize()
     if (route.params.type === 'movie') {
       isMovie = true
     } else {
@@ -41,7 +50,7 @@
 </script>
 
 <template>
-  <main v-if="isMobile >= 700">
+  <main v-if="!store.mobile">
     <div
       class="background"
       :style="{ 'background-image': shared.backdrop_path, '--bgColor': shared.color }"
@@ -54,10 +63,11 @@
           <!-- tv -->
           <h3 class="title" v-if="!isMovie">{{ shared.name }}</h3>
           <span class="genres" v-if="isMovie">
-            {{ shared.release_date }} &bull; {{ genreAndDuration(shared) }}
+            {{ $d(shared.release_date, 'short') }} &bull; {{ genres(shared) }} &bull;
+            {{ minuteToFull(shared.runtime) }}
           </span>
           <span class="genres" v-if="!isMovie">
-            {{ genreAndDuration(shared) }}
+            {{ genres(shared) }}
           </span>
           <div class="rate">
             <rate
@@ -70,7 +80,7 @@
           <h2>{{ $t('Overview') }}</h2>
           <p>{{ shared.overview }}</p>
           <div class="crewContainer" v-if="isMovie">
-            <div class="crew" v-for="(member, index) in shared.reduced" :key="index">
+            <div class="crew" v-for="(member, index) in filteredCast" :key="index">
               <div class="crewName">{{ member.name }}</div>
               <div class="cewJob">{{ member.job.toString() }}</div>
             </div>
@@ -85,7 +95,7 @@
       </div>
     </div>
   </main>
-  <main v-if="isMobile < 700">
+  <main v-if="store.mobile">
     <movieViewBannerMobile />
   </main>
 </template>

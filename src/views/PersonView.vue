@@ -1,29 +1,67 @@
 <script setup>
-  import subNavigationBar from '../components/subNavigationBar.vue'
-  import { ref, onBeforeMount, toRefs, computed } from 'vue'
-  import { useDbStore } from '../stores/dbStore'
+  import subNavigationBar from '@/components/subNavigationBar.vue'
+  import carosuelComp from '@/components/RibbonComp/carosuelComp.vue'
+
+  import { useDbStore } from '@/stores/dbStore'
+  import { SortBy, GroupBy, ageCalculator } from '@/utils/functions.js'
+  import { onBeforeMount, ref, toRefs, watch, onMounted } from 'vue'
   import { useRoute } from 'vue-router'
   const store = useDbStore()
-  const { person } = toRefs(store)
+  const { person, mobile } = toRefs(store)
   const route = useRoute()
-  const isMobile = computed(() => {
-    if (window.innerWidth > 750) {
-      return false
-    } else return true
-  })
-  import carosuelComp from '../components/RibbonComp/carosuelComp.vue'
-  const selectedMediaType = ref('Movie')
-  const mediaTypes = ['Movie', 'TV Shows']
+
+  const selectedMediaType = ref('All')
+  const mediaTypes = ['All', 'Movie', 'TV Shows']
   const selectedDepartment = ref('Acting')
-  function sortByReleaseDates(a, b) {
-    if (a.vote_count < b.vote_count) {
-      return 1
+  const departments = ref([])
+
+  async function initialize() {
+    if (!person.value) {
+      await store.getPerson(route.params.id, store.language)
     }
-    if (a.vote_count > b.vote_count) {
-      return -1
-    }
-    return 0
+    person.value.profiles = person.value.images.profiles
+    SortBy(person.value.movie_credits.cast, 'release_date')
+    SortBy(person.value.tv_credits.cast, 'release_date')
+
+    person.value.movie_credits.crew = GroupBy(
+      SortBy(person.value.movie_credits.crew, 'release_date'),
+      'department'
+    )
+    person.value.tv_credits.crew = GroupBy(
+      SortBy(person.value.tv_credits.crew, 'release_date'),
+      'department'
+    )
+    person.value.combined_credits.crew = GroupBy(
+      SortBy(person.value.combined_credits.crew, 'release_date'),
+      'department'
+    )
+    person.value.age = ageCalculator(person.value.birthday)
+
+    departmentsCalc('All')
   }
+  function departmentsCalc(mediaType) {
+    function departmentArray(creditsType) {
+      if (creditsType.cast) {
+        departments.value = ['Acting']
+      }
+      Object.keys(creditsType.crew).forEach((department) => {
+        if (!departments.value.includes(department)) {
+          departments.value.push(department)
+        }
+      })
+    }
+    switch (mediaType) {
+      case 'TV Shows':
+        departmentArray(person.value.tv_credits)
+        break
+      case 'Movie':
+        departmentArray(person.value.movie_credits)
+        break
+      case 'All':
+        departmentArray(person.value.combined_credits)
+    }
+  }
+
   function filterWorks(selectedMediaType, selectedDepartment) {
     switch (selectedMediaType) {
       case 'Movie':
@@ -34,14 +72,26 @@
         if (selectedDepartment === 'Acting') {
           return person.value.tv_credits.cast
         } else return person.value.tv_credits.crew[selectedDepartment]
+      case 'All':
+        if (selectedDepartment === 'Acting') {
+          return person.value.combined_credits.cast
+        } else return person.value.combined_credits.crew[selectedDepartment]
     }
   }
-  onBeforeMount(() => {})
+  onBeforeMount(() => {
+    initialize()
+  })
+  onMounted(() => {
+    watch(
+      () => selectedMediaType.value,
+      () => departmentsCalc(selectedMediaType.value)
+    )
+  })
 </script>
 
 <template>
   <subNavigationBar />
-  <template v-if="isMobile">
+  <template v-if="mobile">
     <template v-if="person">
       <div class="personView">
         <div>
@@ -86,7 +136,7 @@
         </div>
 
         <carosuelComp
-          :carosuel-array="person.combined_credits.cast.sort(sortByReleaseDates)"
+          :carosuel-array="SortBy(person.combined_credits.cast, 'release_date')"
           class="carosuel" />
         <div class="actingTable">
           <h2>{{ selectedDepartment }}</h2>
@@ -101,7 +151,7 @@
           <div class="department">
             Department
             <ul>
-              <template v-for="department in person.departments" :key="department">
+              <template v-for="department in departments" :key="department">
                 <li @click="() => (selectedDepartment = department)">{{ department }}</li>
               </template>
             </ul>
@@ -121,7 +171,7 @@
       </div>
     </template>
   </template>
-  <template v-if="!isMobile">
+  <template v-if="!mobile">
     <template v-if="person">
       <div class="personView">
         <div class="leftSide">
@@ -172,7 +222,7 @@
           <p>{{ person.biography }}</p>
           <h4>Known For</h4>
           <carosuelComp
-            :carosuel-array="person.combined_credits.cast.sort(sortByReleaseDates)"
+            :carosuel-array="SortBy(person.combined_credits.cast, 'release_date')"
             class="carosuel" />
           <div class="actingTable">
             <h2>{{ selectedDepartment }}</h2>
@@ -187,7 +237,7 @@
             <div class="department">
               Department
               <ul>
-                <template v-for="department in person.departments" :key="department">
+                <template v-for="department in departments" :key="department">
                   <li @click="() => (selectedDepartment = department)">{{ department }}</li>
                 </template>
               </ul>
@@ -348,13 +398,17 @@
       font-size: 1.4em;
     }
     .mediaType {
-      height: 1em;
+      height: 1.3em;
       overflow: hidden;
       right: 8em;
       font-size: 1.3em;
       cursor: pointer;
       position: absolute;
       z-index: 10;
+      box-shadow:
+        5px 5px 10px 0 #edededff,
+        -5px -5px 10px 0 #edededff;
+
       &:hover {
         overflow: visible;
       }
@@ -366,13 +420,17 @@
       }
     }
     .department {
-      height: 1em;
+      height: 1.3em;
       overflow: hidden;
       position: absolute;
       font-size: 1.3em;
       right: 1em;
+
       z-index: 10;
       cursor: pointer;
+      box-shadow:
+        5px 5px 10px 0 #edededff,
+        -5px -5px 10px 0 #edededff;
       &:hover {
         overflow: visible;
       }

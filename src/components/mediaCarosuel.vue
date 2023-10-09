@@ -1,17 +1,19 @@
 <script setup>
-  import { toRefs, ref, onMounted } from 'vue'
+  import { toRefs, ref, onBeforeMount } from 'vue'
   import { useDbStore } from '@/stores/dbStore'
   import applink from '@/components/appLink.vue'
+  import { useRoute } from 'vue-router'
   const store = useDbStore()
   const { shared } = toRefs(store)
   const selectedSection = ref(0)
   const headArray = ['Most Popular', 'Videos', 'Backdrops', 'Posters']
+  const route = useRoute()
 
   function getFirstTen(arr) {
     if (arr.length >= 10) return 10
     else return arr.length
   }
-  onMounted(() => {})
+  onBeforeMount(() => {})
 </script>
 
 <template>

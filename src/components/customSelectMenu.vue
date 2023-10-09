@@ -2,7 +2,7 @@
   import { toRefs, ref, onMounted } from 'vue'
   const props = defineProps({
     dropdownArr: { type: Array, required: true },
-    defaultVal: { type: String || Object, required: true },
+    defaultVal: { type: [String, Object, Array], required: true },
     objectKey: { type: String, required: false }
   })
   const { dropdownArr, defaultVal, objectKey } = toRefs(props)

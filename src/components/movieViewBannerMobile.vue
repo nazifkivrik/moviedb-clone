@@ -3,27 +3,38 @@
   import { storeToRefs } from 'pinia'
   import { useRoute } from 'vue-router'
   import { onBeforeMount } from 'vue'
-  import rate from '../components/rateChart.vue'
+  import { minuteToFull, GroupObject, filterObjectArray } from '@/utils/functions.js'
+  import { ref } from 'vue'
+  import rate from '@/components/rateChart.vue'
   const store = useDbStore()
   const { shared } = storeToRefs(store)
-  function genreAndDuration(shared) {
-    let text = ''
+  const filteredCast = ref()
+
+  function genres(shared) {
     let arr = new Array()
-    shared.genres.map((element) => {
-      arr.push(element.name)
-    })
-    if (shared.runtime) {
-      text =
-        Math.floor(shared.runtime / 60) + 'h' + (shared.runtime % 60) + 'm' + ' • ' + arr.toString()
+    shared.genres.forEach((item) => arr.push(item.name))
+    return arr.join(', ')
+  }
+  async function initialize() {
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
     } else {
-      text = arr.toString()
+      filteredCast.value = await GroupObject(
+        filterObjectArray(
+          shared.value.credits.crew,
+          ['Director', 'Screenplay', 'Story', 'Writer', 'Novel'],
+          'job'
+        ),
+        'name',
+        'job'
+      )
     }
-    return text
   }
   const route = useRoute()
   let isMovie
 
   onBeforeMount(() => {
+    initialize()
     if (route.params.type === 'movie') {
       isMovie = true
     } else {
@@ -58,10 +69,11 @@
             </span>
 
             <span class="genres" v-if="isMovie">
-              {{ shared.release_date }} &bull; {{ genreAndDuration(shared) }}
+              {{ $d(shared.release_date, 'short') }} &bull; {{ genres(shared) }} &bull;
+              {{ minuteToFull(shared.runtime) }}
             </span>
             <span class="genres" v-if="!isMovie">
-              {{ genreAndDuration(shared) }}
+              {{ genres(shared) }}
             </span>
 
             <div class="tagline">{{ shared.tagline }}</div>

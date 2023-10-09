@@ -1,13 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
-import {
-  GroupBy,
-  SortBy,
-  filterObjectArray,
-  ageCalculator,
-  getRandomColor,
-  sortObjByKeys
-} from '@/utils/functions.js'
+import { getRandomColor, SortBy, GroupBy } from '@/utils/functions.js'
 const options = {
   method: 'GET',
   headers: {
@@ -30,26 +23,15 @@ function genderNumToStr(number) {
   }
 }
 
-function CrewFilterByName(array) {
-  let reduced = array.reduce((obj, item) => {
-    item.job = Array(item.job)
-    obj[item.name] ? obj[item.name].job.push(...item.job) : (obj[item.name] = item)
-    return obj
-  }, {})
+// function CrewFilterByName(array) {
+//   let reduced = array.reduce((obj, item) => {
+//     item.job = Array(item.job)
+//     obj[item.name] ? obj[item.name].job.push(...item.job) : (obj[item.name] = item)
+//     return obj
+//   }, {})
 
-  return reduced
-}
-
-function languageFormatter(lang) {
-  let languageFormat = new Intl.DisplayNames(['en'], { type: 'language' })
-  return languageFormat.of(lang)
-}
-function currencyFormatter(cur) {
-  let currencyFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' })
-  let returnval
-  cur !== 0 ? (returnval = currencyFormatter.format(cur)) : (returnval = '-')
-  return returnval
-}
+//   return reduced
+// }
 
 export const useDbStore = defineStore('dbstore', () => {
   const shared = ref(null)
@@ -61,6 +43,14 @@ export const useDbStore = defineStore('dbstore', () => {
   }
   const language = computed(() => {
     return localStorage.getItem('language')
+  })
+  const region = computed(() => {
+    return language.value.split('-')[1]
+  })
+  const mobile = computed(() => {
+    if (window.innerWidth < 750) {
+      return true
+    } else return false
   })
   /**
    *
@@ -175,7 +165,6 @@ export const useDbStore = defineStore('dbstore', () => {
     return data
   }
   async function getShared(type, id, language) {
-    console.log('fetching')
     const response = await fetch(
       `https://api.themoviedb.org/3/${type}/${id}?language=${language}&append_to_response=credits,keywords,external_ids,videos,recommendations`,
       options
@@ -184,73 +173,69 @@ export const useDbStore = defineStore('dbstore', () => {
     const data = await response.json()
     shared.value = data
     shared.value.backdrop_path =
-      'url(' + `https://image.tmdb.org/t/p/w1920_and_h800_multi_faces${data.backdrop_path}` + ')'
+      'url(' + `https://image.tmdb.org/t/p/w1920_and_h1080_multi_faces${data.backdrop_path}` + ')'
 
     shared.value.color = getRandomColor()
-    shared.value.reduced = CrewFilterByName(
-      filterObjectArray(
-        shared.value.credits.crew,
-        ['Director', 'Screenplay', 'Story', 'Writer', 'Novel'],
-        'job'
-      )
-    )
-
-    shared.value.credits.crew = GroupBy(shared.value.credits.crew, 'department')
-    let crewCount = 0
-    for (const obj in shared.value.credits.crew) {
-      crewCount = crewCount + shared.value.credits.crew[obj].length
-      shared.value.credits.crew[obj] = CrewFilterByName(shared.value.credits.crew[obj])
-    }
-    shared.value.crewCount = crewCount
-    shared.value.credits.crew = sortObjByKeys(shared.value.credits.crew)
-    shared.value.original_language = languageFormatter(shared.value.original_language)
-    if (type === 'movie') {
-      shared.value.revenue = currencyFormatter(shared.value.revenue)
-      shared.value.budget = currencyFormatter(shared.value.budget)
-    }
-
-    shared.value.videos = shared.value.videos.results
     let images = await getMediaDetails(type, id, 'images')
-    images.posters = SortBy(images.posters, 'vote_average')
-    images.backdrops = SortBy(images.backdrops, 'vote_average')
-    shared.value.backdrops = images.backdrops
-    shared.value.posters = images.posters
-    shared.value.logos = images.logos
+    shared.value.posters = SortBy(images.posters, 'vote_average')
+    shared.value.backdrops = SortBy(images.backdrops, 'vote_average')
+    shared.value.logos = SortBy(images.logos, 'vote_average')
+    shared.value.videos = GroupBy(shared.value.videos.results, 'type')
   }
 
-  async function getPerson(id) {
+  async function getPerson(id, language) {
+    console.log(language)
     const response = await fetch(
-      `https://api.themoviedb.org/3/person/${id}?append_to_response=images,external_ids,combined_credits,movie_credits,tv_credits&language=en-US`,
+      `https://api.themoviedb.org/3/person/${id}?append_to_response=images,external_ids,combined_credits,movie_credits,tv_credits&language=${language}`,
       options
     )
     const data = await response.json()
     person.value = data
-    person.value.profiles = data.images.profiles
-    person.value.movie_credits.crew = SortBy(person.value.movie_credits.crew, 'release_date')
-    person.value.movie_credits.crew = SortBy(person.value.movie_credits.crew, 'release_date')
-    person.value.movie_credits.cast = SortBy(person.value.movie_credits.cast, 'release_date')
-    person.value.tv_credits.crew = SortBy(person.value.tv_credits.crew, 'release_date')
-    person.value.tv_credits.cast = SortBy(person.value.tv_credits.cast)
-    person.value.movie_credits.crew = GroupBy(person.value.movie_credits.crew, 'department')
-    person.value.tv_credits.crew = GroupBy(person.value.tv_credits.crew, 'department')
-    person.value.combined_credits.crew = GroupBy(person.value.combined_credits.crew, 'department')
 
-    let departmentArr
-    person.value.movie_credits.cast || person.value.tv_credits.cast
-      ? (departmentArr = ['Acting'])
-      : (departmentArr = [])
-
-    Object.keys(person.value.combined_credits.crew).forEach((department) => {
-      if (!departmentArr.includes(department)) {
-        departmentArr.push(department)
-      }
-    })
     person.value.color = getRandomColor()
-    person.value.departments = departmentArr
-    person.value.gender = genderNumToStr(person.value.gender)
-    person.value.age = ageCalculator(person.value.birthday)
-  }
 
+    person.value.gender = genderNumToStr(person.value.gender)
+  }
+  async function getAvailableRegions(language) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/watch/providers/regions?language=${language}`,
+      options
+    )
+    const data = await res.json()
+    return data.results
+  }
+  async function getWatchProviders(type, language, region) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/watch/providers/${type}?language=${language}&watch_region=${region}`,
+      options
+    )
+    const data = await res.json()
+    return data.results
+  }
+  async function getGenres(language) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/genre/movie/list?language=${language}`,
+      options
+    )
+    const data = await res.json()
+    return data.genres
+  }
+  async function searchCompany(string, page) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/company?query=${string}&page=${page}`,
+      options
+    )
+    const data = await res.json()
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
+  }
+  async function searchKeyword(string, page) {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/keyword?query=${string}&page=${page}`,
+      options
+    )
+    const data = await res.json()
+    return { currentPage: data.page, totalPage: data.total_pages, array: data.results }
+  }
   function imageURL(size, path, type) {
     const baseURL = 'https://image.tmdb.org/t/p/'
 
@@ -266,6 +251,8 @@ export const useDbStore = defineStore('dbstore', () => {
 
   return {
     language,
+    mobile,
+    region,
     resetStore,
     getTrendingList,
     getList,
@@ -282,6 +269,11 @@ export const useDbStore = defineStore('dbstore', () => {
     getTVEpisodeGroupsDetails,
     getYoutubeDetails,
     getEpisodes,
+    getAvailableRegions,
+    getWatchProviders,
+    getGenres,
+    searchCompany,
+    searchKeyword,
     imageURL
   }
 })
