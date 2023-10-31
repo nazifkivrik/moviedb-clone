@@ -179,9 +179,6 @@
 </template>
 
 <style scoped lang="scss">
-  a {
-    color: white;
-  }
   .open {
     width: 120px;
   }
@@ -297,6 +294,9 @@
       }
     }
     .othermenus {
+      a {
+        color: white;
+      }
       display: flex;
       column-gap: 30px;
       margin-right: 30px;
