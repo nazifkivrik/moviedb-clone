@@ -6,6 +6,7 @@ import router from './router'
 import appLink from './components/appLink.vue'
 import i18n from './locales/i18n'
 import { vClickOutside } from '@/directives/vClickOutside.js'
+import lazyLoad from './directives/vRenderInViewport'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -66,11 +67,14 @@ const options = {
 }
 
 const app = createApp(App)
+const pinia = createPinia()
 app.component('AppLink', appLink)
 app.component('icon-lib', FontAwesomeIcon)
-app.use(createPinia())
+app.use(pinia)
 app.use(i18n)
 app.use(router)
 app.directive('clickOutside', vClickOutside)
+app.directive('lazyLoad', lazyLoad)
+
 app.provide('fetchOptions', options)
 app.mount('#app')

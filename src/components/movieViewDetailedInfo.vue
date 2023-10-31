@@ -52,7 +52,10 @@
       </p>
       <p v-if="!isMovie">
         <strong>{{ $t('Network') }}</strong
-        ><img :src="store.imageURL('h30', shared.networks[0].logo_path)" alt="" />
+        ><img
+          :src="store.imageURL('h30', shared.networks[0].logo_path)"
+          alt=""
+          v-if="shared.networks" />
       </p>
       <p v-if="!isMovie">
         <strong>{{ $t('Type') }}</strong

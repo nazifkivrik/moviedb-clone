@@ -40,13 +40,10 @@
           <ol>
             <li v-for="castMember in shared.credits.cast" :key="castMember">
               <img
-                :src="store.imageURL('w66_and_h66_face', castMember.profile_path)"
+                :src="store.imageURL('w66_and_h66_face', castMember.profile_path,'person')"
                 alt=""
-                v-if="castMember.profile_path" />
-              <img
-                src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg"
-                alt=""
-                v-else />
+                />
+              
               <app-link :to="`/person/${castMember.id}`">
                 <div class="info">
                   <p class="name">{{ castMember.original_name }}</p>
@@ -67,13 +64,9 @@
               <ol>
                 <li v-for="crewMember in members" :key="crewMember" class="crewMember">
                   <img
-                    :src="store.imageURL('w66_and_h66_face', crewMember.profile_path)"
-                    alt=""
-                    v-if="crewMember.profile_path" />
-                  <img
-                    src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg"
-                    alt=""
-                    v-else />
+                    :src="store.imageURL('w66_and_h66_face', crewMember.profile_path, 'person')"
+                    alt="" />
+
                   <app-link :to="`/person/${crewMember.id}`">
                     <div class="info">
                       <p class="name">{{ crewMember.original_name }}</p>

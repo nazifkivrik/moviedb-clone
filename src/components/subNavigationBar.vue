@@ -155,6 +155,7 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    padding-top: 3.5em;
   }
 
   ul {

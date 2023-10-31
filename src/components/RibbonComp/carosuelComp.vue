@@ -1,10 +1,10 @@
 <script setup>
+  import { useDbStore } from '../../stores/dbStore'
   import rate from '../rateChart.vue'
-  import { toRefs, watch, ref, onMounted } from 'vue'
+  import { toRefs } from 'vue'
   const props = defineProps({ carosuelArray: Array })
   const { carosuelArray } = toRefs(props)
-  const slider = ref(null)
-  const renderCount = ref(8)
+  const store = useDbStore()
   function arrayCheck(obj) {
     if ('release_date' in obj) {
       return 'movie'
@@ -12,65 +12,12 @@
       return 'tv'
     } else return 'person'
   }
-  //lazyload------------
-  const throttle = (callback, delay) => {
-    let throttleTimeout = null
-    let storedEvent = null
-
-    const throttledEventHandler = (event) => {
-      storedEvent = event
-
-      const shouldHandleEvent = !throttleTimeout
-
-      if (shouldHandleEvent) {
-        callback(storedEvent)
-
-        storedEvent = null
-
-        throttleTimeout = setTimeout(() => {
-          throttleTimeout = null
-
-          if (storedEvent) {
-            throttledEventHandler(storedEvent)
-          }
-        }, delay)
-      }
-    }
-
-    return throttledEventHandler
-  }
-  let lazyLoad = throttle(function (event) {
-    if (
-      renderCount.value <
-      Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)
-    ) {
-      renderCount.value = Math.round(
-        (event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150
-      )
-    }
-  }, 250)
-  //------------------------
-
-  //scroll default position
-  watch(carosuelArray, defaultPos)
-  function defaultPos() {
-    slider.value.scrollLeft = 0
-    renderCount.value = 8
-  }
-  //-------------------------
-  onMounted(() => {
-    renderCount.value = Math.round((slider.value.offsetWidth + slider.value.scrollLeft) / 150)
-  })
 </script>
 
 <template>
-  <div
-    class="carosuel"
-    @scroll="(event) => lazyLoad(event)"
-    v-if="carosuelArray.length"
-    ref="slider">
+  <div class="carosuel" v-if="carosuelArray.length">
     <div v-for="(i, index) in carosuelArray" :key="index" class="card">
-      <div class="imageArea" v-if="index <= renderCount">
+      <div class="imageArea">
         <router-link
           :to="{
             name: 'media',
@@ -80,9 +27,9 @@
             }
           }"
           ><img
-            :src="`https://image.tmdb.org/t/p/w220_and_h330_face${carosuelArray[index].poster_path}`"
+            :src="store.imageURL('w220_and_h330_face', carosuelArray[index].poster_path)"
             alt=""
-            loading="lazy"
+            v-lazy-load
         /></router-link>
 
         <rate :popularity="Math.round(carosuelArray[index].vote_average * 10)" class="rate" />
@@ -117,22 +64,10 @@
         </div>
         <div class="releaseDate">
           <h5 v-if="carosuelArray[index].release_date">
-            {{
-              new Date(carosuelArray[index].release_date).toLocaleDateString('en-us', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })
-            }}
+            {{ $d(carosuelArray[index].release_date, 'short') }}
           </h5>
           <h5 v-if="carosuelArray[index].first_air_date">
-            {{
-              new Date(carosuelArray[index].first_air_date).toLocaleDateString('en-us', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })
-            }}
+            {{ $d(carosuelArray[index].first_air_date, 'short') }}
           </h5>
         </div>
       </div>

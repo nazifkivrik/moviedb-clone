@@ -9,7 +9,15 @@ const options = {
       'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
   }
 }
-
+const postOptions = {
+  method: 'POST',
+  headers: {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    Authorization:
+      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
+  }
+}
 function genderNumToStr(number) {
   switch (number) {
     case 0:
@@ -33,7 +41,7 @@ function genderNumToStr(number) {
 //   return reduced
 // }
 
-export const useDbStore = defineStore('dbstore', () => {
+export const useDbStore = defineStore('useDbStore', () => {
   const shared = ref(null)
   const person = ref(null)
 
@@ -164,6 +172,15 @@ export const useDbStore = defineStore('dbstore', () => {
     const data = await res.json()
     return data
   }
+  async function getEpisodeDetails(id, seasonNumber, episodeNumber, append_to_response, language) {
+    let fetchtext = `https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}?language=${language}`
+    if (append_to_response) {
+      fetchtext += `&append_to_response=${append_to_response}`
+    }
+    const res = await fetch(fetchtext, options)
+    const data = await res.json()
+    return data
+  }
   async function getShared(type, id, language) {
     const response = await fetch(
       `https://api.themoviedb.org/3/${type}/${id}?language=${language}&append_to_response=credits,keywords,external_ids,videos,recommendations`,
@@ -238,15 +255,27 @@ export const useDbStore = defineStore('dbstore', () => {
   }
   function imageURL(size, path, type) {
     const baseURL = 'https://image.tmdb.org/t/p/'
-
-    if (path !== '') {
-      return baseURL + size + path
-    } else {
-      if (type === 'person') {
+    if (!path) {
+      if (type === 'person')
         return 'https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg'
-      } else
+      else
         return 'https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg'
+    } else {
+      return baseURL + size + path
     }
+  }
+  const createRequestToken = async () => {
+    const res = await fetch('https://api.themoviedb.org/3/authentication/token/new', options)
+    const data = await res.json()
+    return data
+  }
+  const createSession = async (token) => {
+    postOptions.body = JSON.stringify({ request_token: token })
+    console.log(postOptions)
+    console.log(token)
+    const res = await fetch('https://api.themoviedb.org/3/authentication/session/new', postOptions)
+    const data = await res.json()
+    return data
   }
 
   return {
@@ -269,11 +298,14 @@ export const useDbStore = defineStore('dbstore', () => {
     getTVEpisodeGroupsDetails,
     getYoutubeDetails,
     getEpisodes,
+    getEpisodeDetails,
     getAvailableRegions,
     getWatchProviders,
     getGenres,
     searchCompany,
     searchKeyword,
-    imageURL
+    imageURL,
+    createRequestToken,
+    createSession
   }
 })

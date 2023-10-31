@@ -4,3 +4,17 @@
   overflow: hidden;
   -webkit-line-clamp: $lineCount;
 }
+
+@mixin custom-scrollbar() {
+  & ::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #ededed;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #032541;
+    border-radius: 5px;
+  }
+}

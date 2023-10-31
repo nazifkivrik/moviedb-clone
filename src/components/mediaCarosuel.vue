@@ -96,12 +96,18 @@
 
       <div class="backdrops" v-if="selectedSection == 2 && shared.backdrops">
         <div class="backdrop" v-for="index in getFirstTen(shared.backdrops)" :key="index">
-          <img :src="store.imageURL('w500', shared.backdrops[index - 1].file_path)" alt="" />
+          <img
+            :src="store.imageURL('w500', shared.backdrops[index - 1].file_path)"
+            alt=""
+            v-lazy-load />
         </div>
       </div>
       <div class="posters" v-if="selectedSection == 3 && shared.posters">
         <div class="poster" v-for="index in getFirstTen(shared.posters)" :key="index">
-          <img :src="store.imageURL('w500', shared.posters[index - 1].file_path)" alt="" />
+          <img
+            :src="store.imageURL('w500', shared.posters[index - 1].file_path)"
+            alt=""
+            v-lazy-load />
         </div>
       </div>
     </div>

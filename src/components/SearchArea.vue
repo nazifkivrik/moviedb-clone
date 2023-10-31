@@ -284,7 +284,7 @@
             margin-top: 3px;
             font-size: 0.8em;
             width: 49vw;
-            text-overflow: clip;
+            @include line-clamp(5);
           }
         }
       }

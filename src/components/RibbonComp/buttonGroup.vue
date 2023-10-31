@@ -33,6 +33,7 @@
 
   .eachButton {
     height: 2.3em;
+    width: 6em;
     border-right: none;
     border-left: none;
     border-width: 0.5px;

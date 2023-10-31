@@ -1,17 +1,24 @@
 <script setup>
   import backToMain from '@/components/backToMain.vue'
-import subNavigationBar from '@/components/subNavigationBar.vue'
-import { useDbStore } from '@/stores/dbStore'
-import { storeToRefs } from 'pinia'
-import { onBeforeMount, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { GroupBy } from '../../utils/functions'
+  import subNavigationBar from '@/components/subNavigationBar.vue'
+  import { useDbStore } from '@/stores/dbStore'
+  import { storeToRefs } from 'pinia'
+  import { onBeforeMount, ref, watch, computed } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import { GroupBy } from '../../utils/functions'
   const store = useDbStore()
   const { shared } = storeToRefs(store)
   const route = useRoute()
+  const router = useRouter()
   const episodes = ref()
   const episodeList = ref()
-
+  const seasonNumber = computed(() => {
+    return route.params.seasonNumber
+  })
+  watch(
+    () => seasonNumber.value,
+    () => router.go(0)
+  )
   async function initialize() {
     if (!store.shared) {
       await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
@@ -22,26 +29,26 @@ import { GroupBy } from '../../utils/functions'
       localStorage.getItem('language')
     )
     episodes.value = res.episodes
-    episodes.value.forEach((item) => {
-      item.crewGrouped = GroupBy(item.crew, 'department')
-    })
-    console.log(episodes.value[0].crewGrouped)
-    episodes.value.forEach((item) => {
-      for (const [key, value] of Object.entries(item.crewGrouped)) {
-        item.crewGrouped[key] = GroupBy(value, 'name')
-      }
-    })
-    console.log(episodes.value[0].crewGrouped)
   }
   onBeforeMount(() => {
     initialize()
   })
 
-  function expand(index) {
-    episodeList.value[index].children[1].classList.toggle('hidden')
-    console.log(
-      episodeList.value[index].children[0].children[1].children[3].classList.toggle('lineClamp')
+  async function expand(index) {
+    let res = await store.getEpisodeDetails(
+      route.params.id,
+      route.params.seasonNumber,
+      index + 1,
+      'images',
+      localStorage.getItem('language')
     )
+    episodes.value[index].crewGrouped = GroupBy(episodes.value[index].crew, 'department')
+    for (const [key, value] of Object.entries(episodes.value[index].crewGrouped)) {
+      episodes.value[index].crewGrouped[key] = GroupBy(value, 'name')
+    }
+    console.log(res)
+    episodes.value[index].images = res.images
+    episodeList.value[index].children[1].classList.toggle('hidden')
   }
 </script>
 
@@ -52,23 +59,18 @@ import { GroupBy } from '../../utils/functions'
 
     <div class="previousAndNext">
       <span class="previousSeason" v-if="route.params.seasonNumber > 0">
-        <app-link
-          :to="{
-            path: `/tv/${route.params.id}/season/${route.params.seasonNumber}/${
-              route.params.seasonNumber - 1
-            }`
-          }">
+        <app-link :to="`/tv/${route.params.id}/season/${parseInt(route.params.seasonNumber) - 1}`">
           <icon-lib icon="fa-left-long" />
           {{ shared.seasons[route.params.seasonNumber - 1].name }}
         </app-link>
       </span>
-      <span class="nextSeason" v-if="route.params.seasonNumber < shared.seasons.length">
+      <span class="nextSeason" v-if="route.params.seasonNumber < shared.number_of_seasons">
         <app-link
           :to="{
             path: `/tv/${route.params.id}/season/${parseInt(route.params.seasonNumber) + 1} `
           }">
-          {{ shared.seasons[parseInt(route.params.seasonNumber) + 1].name
-          }}<icon-lib icon="fa-right-long" />
+          {{ shared.seasons[parseInt(route.params.seasonNumber) + 1].name }}
+          <icon-lib icon="fa-right-long" />
         </app-link>
       </span>
     </div>
@@ -76,7 +78,11 @@ import { GroupBy } from '../../utils/functions'
       <ul>
         <li v-for="(episode, index) in episodes" :key="episode" ref="episodeList">
           <span class="episode">
-            <img :src="store.imageURL('w227_and_h127_bestv2', episode.still_path)" alt="" />
+            <img
+              :src="store.imageURL('w227_and_h127_bestv2', episode.still_path)"
+              alt=""
+              v-lazy-load
+              @click="expand(index)" />
 
             <span class="info">
               <h2>{{ episode.episode_number }}&nbsp;{{ episode.name }}</h2>
@@ -85,7 +91,9 @@ import { GroupBy } from '../../utils/functions'
                 <icon-lib icon="fa-solid fa-star" style="color: #ffffff" size="xs" />
                 {{ Math.round(episode.vote_average * 10) / 10 }}
               </span>
-              <span class="airDate">{{ episode.air_date }} &#x2022; {{ episode.runtime }}m</span>
+              <span class="airDate"
+                >{{ $d(episode.air_date, 'short') }} &#x2022; {{ episode.runtime }}m</span
+              >
 
               <p class="lineClamp">{{ episode.overview }}</p>
             </span>
@@ -123,9 +131,9 @@ import { GroupBy } from '../../utils/functions'
                 <ul>
                   <li v-for="star in episode.guest_stars" :key="star">
                     <img
-                      :src="store.imageURL('w66_and_h66_face', star.profile_path)"
+                      :src="store.imageURL('w66_and_h66_face', star.profile_path, 'person')"
                       alt=""
-                      loading="lazy" />
+                      v-lazy-load />
                     <span class="starInfo">
                       <strong>{{ star.name }}</strong
                       ><br />
@@ -140,6 +148,18 @@ import { GroupBy } from '../../utils/functions'
                 </h3>
                 No guest stars have been added.
               </span>
+            </span>
+            <span v-if="episode.images">
+              <h3>Episode images</h3>
+
+              <div class="imageContainer">
+                <template v-for="image in episode.images.stills" :key="image">
+                  <img
+                    :src="store.imageURL('w160_and_h90_bestv2', image.file_path)"
+                    alt=""
+                    v-lazy-load />
+                </template>
+              </div>
             </span>
           </span>
           <span class="expand" @click="expand(index)"
@@ -177,6 +197,7 @@ import { GroupBy } from '../../utils/functions'
       right: 12%;
     }
   }
+
   .seasonContainer {
     padding-left: 50px;
     padding-top: 10px;
@@ -206,12 +227,12 @@ import { GroupBy } from '../../utils/functions'
           display: flex;
           flex-direction: row;
           position: relative;
-
           border-radius: 15px;
 
           img {
             height: 127px;
             border-top-left-radius: 15px;
+            cursor: pointer;
           }
 
           .info {
@@ -276,6 +297,8 @@ import { GroupBy } from '../../utils/functions'
                   align-items: center;
                   img {
                     border-radius: 10px;
+                    width: 66px;
+                    height: 66px;
                   }
                   .starInfo {
                     padding-left: 13px;
@@ -285,7 +308,16 @@ import { GroupBy } from '../../utils/functions'
               }
             }
           }
+
+          .imageContainer {
+            overflow-x: scroll;
+            display: flex;
+            column-gap: 10px;
+            padding: 10px 10px;
+            @include custom-scrollbar;
+          }
         }
+
         .expand {
           padding: 4px 0;
           cursor: pointer;

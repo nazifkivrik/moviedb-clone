@@ -1,74 +1,28 @@
 <script setup>
   const props = defineProps({ cast: Array })
-  import { toRefs, ref, onMounted } from 'vue'
+  import { toRefs, ref } from 'vue'
   import { useDbStore } from '../stores/dbStore'
   import AppLink from '../components/appLink.vue'
   const store = useDbStore()
   const { cast } = toRefs(props)
   const slider = ref(null)
-  const renderCount = ref(null)
   function arrSlice(arr) {
     arr = arr.slice(0, 9)
     return arr
   }
-  //lazy load ----------------
-  const throttle = (callback, delay) => {
-    let throttleTimeout = null
-    let storedEvent = null
-
-    const throttledEventHandler = (event) => {
-      storedEvent = event
-
-      const shouldHandleEvent = !throttleTimeout
-
-      if (shouldHandleEvent) {
-        callback(storedEvent)
-
-        storedEvent = null
-
-        throttleTimeout = setTimeout(() => {
-          throttleTimeout = null
-
-          if (storedEvent) {
-            throttledEventHandler(storedEvent)
-          }
-        }, delay)
-      }
-    }
-
-    return throttledEventHandler
-  }
-  let lazyLoad = throttle(function (event) {
-    if (
-      renderCount.value <
-      Math.round((event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150)
-    ) {
-      renderCount.value = Math.round(
-        (event.srcElement.offsetWidth + event.srcElement.scrollLeft) / 150
-      )
-    }
-  }, 250)
-  //------------------------------
-  onMounted(() => {
-    renderCount.value = Math.round((slider.value.offsetWidth + slider.value.scrollLeft) / 150)
-  })
 </script>
 
 <template>
   <div class="peopleCarosuel">
     <h2 class="header">{{ $t('Cast') }}</h2>
-    <div class="carosuel" v-if="cast" ref="slider" @scroll="(event) => lazyLoad(event)">
+    <div class="carosuel" v-if="cast" ref="slider">
       <div class="memberCard" v-for="(member, index) in arrSlice(cast)" :key="index">
         <div class="image">
           <AppLink :to="`/person/${member.id}`"
             ><img
-              :src="store.imageURL('w138_and_h175_face', member.profile_path)"
+              :src="store.imageURL('w138_and_h175_face', member.profile_path, 'person')"
               alt=""
-              v-if="renderCount >= index && member.profile_path" />
-            <img
-              src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg"
-              alt=""
-              v-else-if="!member.profile_path" />
+              v-lazy-load />
           </AppLink>
         </div>
         <div class="text">

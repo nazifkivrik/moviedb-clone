@@ -15,6 +15,10 @@ import group from '@/views/detailViews//episodeGroupDetail.vue'
 import discoverMovie from '@/views/DiscoverMovie.vue'
 import discoverTV from '@/views/DiscoverTVShows.vue'
 import tvEpisodes from '@/views/detailViews/tvEpisodes.vue'
+import authPage from '@/views/AuthPage.vue'
+import { useAuthStore } from '@/stores/authStore.js'
+
+import userSettings from '@/views/user/UserSettings.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -23,6 +27,12 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: { title: 'TMDB-C' }
+    },
+    {
+      path: '/login',
+      name: 'authPage',
+      component: authPage,
+      meta: { title: 'Login', auth: false }
     },
     {
       path: '/search',
@@ -97,12 +107,28 @@ const router = createRouter({
       name: 'videos',
       component: videos,
       children: [{ path: 'player', component: videoPlayer }]
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: userSettings,
+      meta: { title: 'Settings', auth: true }
     }
   ]
 })
 router.beforeEach((to, from) => {
   if (to.meta.title) {
     document.title = to.meta.title
+  }
+})
+router.beforeEach(async (to, from) => {
+  const authStore = useAuthStore()
+  console.log(authStore.user && to.path === '/login')
+  if (to.meta.auth && !authStore.user) {
+    return { name: 'authPage' }
+  }
+  if (authStore.user && to.path === '/login') {
+    return { name: 'home' }
   }
 })
 export default router

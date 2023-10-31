@@ -110,14 +110,7 @@
             <li v-for="(object, index) in results[key].results" :key="index" class="movie">
               <app-link :to="{ path: `/${key}/${object.id}` }">
                 <span class="image">
-                  <img
-                    :src="store.imageURL('w92', object.poster_path)"
-                    alt=""
-                    v-if="object.poster_path" />
-                  <img
-                    src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg"
-                    alt=""
-                    v-if="!object.poster_path" />
+                  <img :src="store.imageURL('w92', object.poster_path)" alt="" />
                 </span>
                 <span class="cardDetail">
                   <h2 class="title">{{ object.original_title }}</h2>
@@ -135,14 +128,7 @@
             <li v-for="(object, index) in results[key].results" :key="index" class="tv">
               <app-link :to="{ path: `/${key}/${object.id}` }">
                 <span class="image">
-                  <img
-                    :src="store.imageURL('w92', object.poster_path)"
-                    alt=""
-                    v-if="object.poster_path" />
-                  <img
-                    src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg"
-                    alt=""
-                    v-if="!object.poster_path" />
+                  <img :src="store.imageURL('w92', object.poster_path)" alt="" />
                 </span>
                 <span class="cardDetail">
                   <h2 class="title">{{ object.name }}</h2>
@@ -161,13 +147,8 @@
               <app-link :to="{ path: `/${key}/${object.id}` }">
                 <span class="image">
                   <img
-                    :src="store.imageURL('w90_and_h90_face', object.profile_path)"
-                    alt=""
-                    v-if="object.profile_path" />
-                  <img
-                    src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg"
-                    alt=""
-                    v-if="!object.profile_path" />
+                    :src="store.imageURL('w90_and_h90_face', object.profile_path, 'person')"
+                    alt="" />
                 </span>
                 <span class="cardDetail">
                   <h2 class="title">{{ object.name }}</h2>
@@ -211,14 +192,7 @@
             <li v-for="(object, index) in results[key].results" :key="index" class="collection">
               <app-link :to="{ path: `/${key}/${object.id}` }">
                 <span class="image">
-                  <img
-                    :src="store.imageURL('w92', object.poster_path)"
-                    alt=""
-                    v-if="object.poster_path" />
-                  <img
-                    src="https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg"
-                    alt=""
-                    v-if="!object.poster_path" />
+                  <img :src="store.imageURL('w92', object.poster_path)" alt="" />
                 </span>
                 <span class="cardDetail">
                   <h2 class="title">{{ object.original_title }}</h2>
@@ -256,7 +230,7 @@
   .searchResults {
     display: grid;
     grid-template-columns: 1fr 4fr;
-    padding-top: 30px;
+    padding-top: calc(3em + 30px);
 
     .searchArea {
       grid-column: 1/3;
@@ -351,8 +325,6 @@
             flex-direction: row;
             justify-content: center;
             .image {
-              width: 92px;
-              height: 138px;
               img {
                 width: 92px;
                 height: 138px;
@@ -373,7 +345,7 @@
                 font-weight: 300;
               }
               p {
-                text-overflow: clip;
+                @include line-clamp(3);
               }
             }
           }

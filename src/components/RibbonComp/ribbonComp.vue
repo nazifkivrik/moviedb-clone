@@ -20,13 +20,24 @@
       </div>
 
       <div class="carosuel">
-        <carosuel :carosuelArray="carosuelArray" v-if="carosuelArray.length > 0" />
+        <transition name="afterLoad">
+          <carosuel :carosuelArray="carosuelArray" v-if="carosuelArray.length > 0" />
+        </transition>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+  .afterLoad-enter-active,
+  .afterLoad-leave-active {
+    transition: opacity 0.5s ease;
+  }
+
+  .afterLoad-enter-from,
+  .afterLoad-leave-to {
+    opacity: 0;
+  }
   .ribbon {
     display: flex;
     justify-content: center;
@@ -43,7 +54,9 @@
   }
   .carosuel {
     width: 100%;
+    @include custom-scrollbar;
   }
+
   .header {
     display: inline-flex;
     flex-direction: row;

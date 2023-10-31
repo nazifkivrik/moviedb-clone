@@ -1,10 +1,32 @@
 <script setup>
   import NavigationBar from './components/NavigationBar.vue'
+  import { onMounted, onUnmounted, ref } from 'vue'
+  let lastScrollTop = 0
+  function scrollDirectionEvent() {
+    const currentScrollTop = window.scrollY
+
+    if (currentScrollTop > lastScrollTop) {
+      scrollDirection.value = false
+    } else if (currentScrollTop < lastScrollTop) {
+      scrollDirection.value = true
+    }
+
+    lastScrollTop = currentScrollTop
+  }
+  const scrollDirection = ref(true)
+  onMounted(() => {
+    window.addEventListener('scroll', scrollDirectionEvent)
+  })
+  onUnmounted(() => {
+    window.removeEventListener('scroll', scrollDirectionEvent)
+  })
 </script>
 
 <template>
   <body>
-    <navigation-bar class="navbar" />
+    <transition name="nav">
+      <navigation-bar v-if="scrollDirection" />
+    </transition>
 
     <router-view></router-view>
   </body>
@@ -56,5 +78,16 @@
   body {
     padding: 0;
     margin: 0;
+  }
+
+  .nav-enter-active,
+  .nav-leave-active {
+    transition: all 0.5s ease;
+  }
+
+  .nav-enter-from,
+  .nav-leave-to {
+    transform: translateY(-100%);
+    opacity: 0;
   }
 </style>

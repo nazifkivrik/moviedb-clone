@@ -3,9 +3,9 @@
   import { ref, computed, onBeforeMount } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
-  import { useDbStore } from '@/stores/dbStore.js'
   import customSelect from '@/components/customSelectMenu.vue'
-  const store = useDbStore()
+  import { useAuthStore } from '@/stores/authStore.js'
+  const authStore = useAuthStore()
   const { availableLocales } = useI18n()
   const isMobile = computed(() => {
     return window.innerWidth
@@ -24,6 +24,7 @@
     })
     return returnobj
   }
+
   const toggle = ref(false)
   const router = useRouter()
   const availableLanguages = ref()
@@ -38,13 +39,17 @@
         }
       })
     })
-    console.log(lang)
     return lang
   }
-  let languages = ''
+  const languages = [
+    { english_name: 'English', iso_639_1: 'en', name: 'English' },
+    { english_name: 'Turkish', iso_639_1: 'tr', name: 'Türkçe' }
+  ]
   async function initialize() {
-    languages = await store.getLanguages()
     availableLanguages.value = filterLanguage(availableLocales, languages)
+  }
+  const logout = () => {
+    authStore.logoutUser()
   }
   onBeforeMount(() => {
     initialize()
@@ -124,7 +129,25 @@
       <icon-lib icon="fa-solid fa-plus" size="lg" />
       <icon-lib icon="fa-solid fa-circle-half-stroke" size="lg" />
       <icon-lib icon="fa-solid fa-bell" size="lg" />
-      <button>N</button>
+      <div>
+        <div v-if="authStore.user" class="profile">
+          <ul>
+            <li>
+              <img src="" alt="" v-if="authStore.user.avatar" />
+              <span v-else>{{ authStore.user.username }}</span>
+            </li>
+            <li>Discussions</li>
+            <li>Lists</li>
+            <li>Ratings</li>
+            <li>Watchlist</li>
+            <li><app-link :to="'/settings'">Settings</app-link></li>
+            <li @click="logout">Logout</li>
+          </ul>
+        </div>
+        <div v-else>
+          <appLink :to="{ path: '/login' }">Login/Register</appLink>
+        </div>
+      </div>
     </div>
     <aside :class="[toggle ? 'open' : 'close']">
       <div @click="() => (toggle = !toggle)" v-if="isMobile <= 800" class="toggleButton">
@@ -140,20 +163,35 @@
         <span> <icon-lib icon="fa-solid fa-plus" size="lg" /> Add</span>
         <span> <icon-lib icon="fa-solid fa-circle-half-stroke" size="lg" /> Theme </span>
         <span> <icon-lib icon="fa-solid fa-bell" size="lg" /> Notifications</span>
-        <span><icon-lib icon="fa-regular fa-user" /> Profile</span>
+        <span>
+          <div>
+            <div v-if="authStore.user" class="profile">
+              <span><icon-lib icon="fa-regular fa-user" />{{ authStore.user.username }}</span>
+            </div>
+            <div v-else>
+              <appLink :to="{ path: '/login' }">Login/Register</appLink>
+            </div>
+          </div></span
+        >
       </div>
     </aside>
   </header>
 </template>
 
 <style scoped lang="scss">
+  a {
+    color: white;
+  }
   .open {
     width: 120px;
   }
   .close {
     width: 35px;
   }
-
+  ul {
+    list-style: none;
+    padding-inline-start: 0;
+  }
   header {
     display: flex;
     flex-direction: row;
@@ -161,11 +199,10 @@
     align-items: center;
     background-color: #032541;
     color: white;
-    position: relative;
-    z-index: 500;
     width: 100%;
     height: 3.5em;
-    position: sticky;
+    position: fixed;
+    z-index: 110;
     .logoandmenu {
       display: flex;
       flex-direction: row;
@@ -186,10 +223,7 @@
         display: flex;
         flex-direction: row;
         width: max-content;
-        ul {
-          list-style: none;
-          padding-inline-start: 0;
-        }
+
         li {
           cursor: pointer;
           &:hover {
@@ -238,7 +272,7 @@
       right: 5px;
       display: flex;
       flex-direction: column;
-      z-index: 10;
+      z-index: 10000;
 
       .toggleButton {
         position: absolute;
@@ -268,13 +302,32 @@
       margin-right: 30px;
       align-items: center;
       justify-content: center;
+      position: relative;
+      z-index: 600;
+      .profile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
-      button {
-        background-color: lightblue;
-        color: white;
-        width: 2em;
-        height: 2em;
-        border-radius: 50%;
+        ul {
+          overflow: hidden;
+          height: 1em;
+          margin: 0;
+          color: white;
+
+          &:hover {
+            overflow: visible;
+            border-radius: 5px;
+          }
+          li {
+            &:nth-child(1) {
+              padding: 0;
+            }
+            cursor: pointer;
+            background-color: #032541;
+            padding: 7px 15px;
+          }
+        }
       }
     }
   }

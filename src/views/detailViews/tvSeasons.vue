@@ -1,10 +1,21 @@
 <script setup>
   import backToMain from '@/components/backToMain.vue'
   import subNavigationBar from '@/components/subNavigationBar.vue'
+  import { onBeforeMount } from 'vue'
   import { useDbStore } from '@/stores/dbStore'
   import { storeToRefs } from 'pinia'
+  import { useRoute } from 'vue-router'
   const store = useDbStore()
   const { shared } = storeToRefs(store)
+  const route = useRoute()
+  async function initialize() {
+    if (!store.shared) {
+      await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
+    }
+  }
+  onBeforeMount(() => {
+    initialize()
+  })
 </script>
 
 <template>
