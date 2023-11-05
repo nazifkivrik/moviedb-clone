@@ -25,24 +25,21 @@
   })
 
   async function getArray(index) {
-    if (movieRibbonObj[index].array.length === 0) {
-      movieRibbonObj[index] = await store.getList(
-        'movie',
-        movieRibbonEnum[index],
-        locale.value,
-        1,
-        locale.value.split('-')[1]
-      )
-      movieRibbonSelectedIndex.value = index
-    }
+    movieRibbonObj[index] = await store.getList(
+      'movie',
+      movieRibbonEnum[index],
+      locale.value,
+      1,
+      locale.value.split('-')[1]
+    )
+    movieRibbonSelectedIndex.value = index
   }
   async function getTrendingList(index) {
-    if (trendingRibbonObj[index].array.length === 0)
-      trendingRibbonObj[index] = await store.getTrendingList(
-        'all',
-        trendingRibbonEnum[index],
-        locale.value
-      )
+    trendingRibbonObj[index] = await store.getTrendingList(
+      'all',
+      trendingRibbonEnum[index],
+      locale.value
+    )
     trendingRibbonSelectedIndex.value = index
   }
   async function getfreeToWatch(index) {
@@ -54,10 +51,8 @@
     if (index === 1) {
       query += '&include_null_first_air_dates=false'
     }
-    if (freeToWatchRibbonObj[index].array.length === 0) {
-      freeToWatchRibbonObj[index] = await store.Discover(freeToWatchEnum[index], query)
-      freeToWatchSelectedIndex.value = index
-    }
+    freeToWatchRibbonObj[index] = await store.Discover(freeToWatchEnum[index], query)
+    freeToWatchSelectedIndex.value = index
   }
 </script>
 

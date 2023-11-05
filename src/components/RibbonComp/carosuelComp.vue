@@ -1,10 +1,11 @@
 <script setup>
-  import { useDbStore } from '../../stores/dbStore'
+  import { useDbStore } from '@/stores/dbStore'
   import rate from '../rateChart.vue'
-  import { toRefs } from 'vue'
+  import { toRefs, ref } from 'vue'
   const props = defineProps({ carosuelArray: Array })
   const { carosuelArray } = toRefs(props)
   const store = useDbStore()
+  const options = ref()
   function arrayCheck(obj) {
     if ('release_date' in obj) {
       return 'movie'
@@ -31,7 +32,9 @@
             alt=""
             v-lazy-load
         /></router-link>
-
+        <div class="options" ref="options">
+          <icon-lib icon="fa-solid fa-gears" size="lg" color="#aab8c3"></icon-lib>
+        </div>
         <rate :popularity="Math.round(carosuelArray[index].vote_average * 10)" class="rate" />
       </div>
 
@@ -107,7 +110,11 @@
     flex-direction: column;
     position: relative;
   }
-
+  .options {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+  }
   .rate {
     display: inline;
     position: absolute;

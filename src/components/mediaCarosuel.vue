@@ -77,21 +77,24 @@
           alt=""
           v-if="shared.posters.length > 0" />
       </div>
-      <div class="videos" v-if="selectedSection == 1 && shared.videos">
-        <div class="video" v-for="index in getFirstTen(shared.videos)" :key="index">
-          <applink
-            :to="{
-              path: `/movie/${shared.id}/player`,
-              query: { key: shared.videos[index - 1].key, name: shared.videos[index - 1].name }
-            }">
-            <div class="videoPkg">
-              <img
-                :src="`https://i.ytimg.com/vi/${shared.videos[index - 1].key}/maxresdefault.jpg`"
-                alt="" />
-              <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
-            </div>
-          </applink>
-        </div>
+      <div class="videoContainer" v-if="selectedSection == 1 && shared.videos">
+        <template v-for="videos in shared.videos" :key="videos">
+          <div v-for="video in videos" :key="video">
+            <applink
+              :to="{
+                path: `/movie/${shared.id}/player`,
+                query: { key: video.key, name: video.name }
+              }">
+              <div class="videoPkg">
+                <img
+                  :src="`https://i.ytimg.com/vi/${video.key}/maxresdefault.jpg`"
+                  alt=""
+                  v-lazy-load />
+                <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
+              </div>
+            </applink>
+          </div>
+        </template>
       </div>
 
       <div class="backdrops" v-if="selectedSection == 2 && shared.backdrops">
@@ -135,6 +138,7 @@
       right: 5px;
     }
   }
+
   .mediaSection {
     position: relative;
     .mediaMenus {
@@ -189,22 +193,8 @@
     overflow-x: scroll;
     column-gap: 15px;
   }
-  .videos {
-    display: flex;
-    flex-direction: row;
-    overflow-x: scroll;
-    column-gap: 15px;
-    scroll-behavior: smooth;
-    scroll-snap-align: end;
-  }
-  .backdrops {
-    display: flex;
-    flex-direction: row;
-    overflow-x: scroll;
-    column-gap: 15px;
-    scroll-behavior: smooth;
-    scroll-snap-align: end;
-  }
+  .videoContainer,
+  .backdrops,
   .posters {
     display: flex;
     flex-direction: row;
@@ -213,6 +203,7 @@
     scroll-behavior: smooth;
     scroll-snap-align: end;
   }
+
   .videoPkg {
     display: flex;
     align-items: center;

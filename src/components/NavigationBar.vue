@@ -270,7 +270,9 @@
       display: flex;
       flex-direction: column;
       z-index: 10000;
-
+      a {
+        color: white;
+      }
       .toggleButton {
         position: absolute;
         right: 5px;

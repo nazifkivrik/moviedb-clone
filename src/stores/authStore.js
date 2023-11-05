@@ -5,13 +5,15 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth'
-import { doc, setDoc, query, where, getDocs, collection, getDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/utils/firebaseAuth'
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 const userTemplate = { sessionId: '', avatar: '', showAdult: false }
 export const useAuthStore = defineStore('authStore', () => {
   const user = ref()
   const isAuthenticated = ref(false)
+  const router = useRouter()
   const init = () => {
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -28,7 +30,7 @@ export const useAuthStore = defineStore('authStore', () => {
     })
   }
   const registerUser = (credentials) => {
-    createUserWithEmailAndPassword(auth, credentials.email, credentials.password)
+    let err = createUserWithEmailAndPassword(auth, credentials.email, credentials.password)
       .then((userCredential) => {
         // Signed up
         addDocument(credentials.email, {
@@ -36,23 +38,28 @@ export const useAuthStore = defineStore('authStore', () => {
           email: credentials.email,
           ...userTemplate
         })
+        router.replace({ path: '/' })
+
         // ...
       })
       .catch((error) => {
-        console.log(error)
+        return error
         // ..
       })
+    return err
   }
   const loginUser = (credentials) => {
-    signInWithEmailAndPassword(auth, credentials.email, credentials.password)
+    let err = signInWithEmailAndPassword(auth, credentials.email, credentials.password)
       .then(async (userCredential) => {
         // Signed in
         user.value = await getDocument(credentials.email)
+        router.replace({ path: '/' })
         // ...
       })
       .catch((error) => {
-        console.log(error)
+        return error
       })
+    return err
   }
   const logoutUser = () => {
     signOut(auth)

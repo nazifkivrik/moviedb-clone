@@ -2,18 +2,22 @@
   import { ref, reactive, onMounted, watch } from 'vue'
   import { useAuthStore } from '@/stores/authStore.js'
   import { useRouter } from 'vue-router'
+  const router = useRouter()
   const authStore = useAuthStore()
   const modeVar = ref('Login')
-  const router = useRouter()
   const credentials = reactive({ email: '', password: '', username: '' })
+  const err = ref()
   const onSubmit = async () => {
     if (modeVar.value === 'Register') {
-      authStore.registerUser(credentials)
+      err.value = await authStore.registerUser(credentials)
     } else {
-      authStore.loginUser(credentials).then(() => router.replace({ path: '/' }))
+      err.value = await authStore.loginUser(credentials)
     }
   }
-
+  watch(
+    () => modeVar.value,
+    () => (err.value = null)
+  )
   onMounted(() => {
     authStore.init()
   })
@@ -59,6 +63,7 @@
         <input type="checkbox" name="rememberMe" />
       </div>
       <input type="submit" :value="modeVar" @click="onSubmit()" />
+      <span style="color: red" v-if="err">{{ err.code }}</span>
     </div>
   </main>
 </template>

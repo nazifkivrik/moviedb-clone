@@ -123,7 +123,6 @@ router.beforeEach((to, from) => {
 })
 router.beforeEach(async (to, from) => {
   const authStore = useAuthStore()
-  console.log(authStore.user && to.path === '/login')
   if (to.meta.auth && !authStore.user) {
     return { name: 'authPage' }
   }

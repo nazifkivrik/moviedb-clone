@@ -6,10 +6,10 @@ import router from './router'
 import appLink from './components/appLink.vue'
 import i18n from './locales/i18n'
 import { vClickOutside } from '@/directives/vClickOutside.js'
-import lazyLoad from './directives/vRenderInViewport'
+import lazyLoad from '@/directives/vRenderInViewport'
 
-import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
 import { faCircleXmark, faCirclePlay, faUser } from '@fortawesome/free-regular-svg-icons'
 import {
   faLink,
@@ -28,7 +28,8 @@ import {
   faCheck,
   faAnglesUp,
   faLeftLong,
-  faRightLong
+  faRightLong,
+  faGears
 } from '@fortawesome/free-solid-svg-icons'
 import { faFacebook, faImdb, faInstagram, faTwitter } from '@fortawesome/free-brands-svg-icons'
 library.add(
@@ -55,7 +56,8 @@ library.add(
   faCheck,
   faAnglesUp,
   faLeftLong,
-  faRightLong
+  faRightLong,
+  faGears
 )
 const options = {
   method: 'GET',
