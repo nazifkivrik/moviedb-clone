@@ -3,30 +3,29 @@
   import { useDbStore } from '@/stores/dbStore'
   import subNav from '@/components/subNavigationBar.vue'
   import backToMain from '@/components/backToMain.vue'
-  import { toRefs, computed, onBeforeMount } from 'vue'
+  import { toRefs, onBeforeMount } from 'vue'
   const route = useRoute()
   const store = useDbStore()
   const { shared } = toRefs(store)
-  import { GroupBy, iso8601 } from '@/utils/functions'
-  const filteredVideos = computed(() => {
-    if (shared.value) {
-      return GroupBy(shared.value.videos, 'type')
-    } else return null
-  })
+  import { iso8601 } from '@/utils/functions'
 
   async function initialize() {
     let youtubeIDs = '&'
     if (!store.shared) {
       await store.getShared(route.params.type, route.params.id, localStorage.getItem('language'))
     }
-    shared.value.videos.forEach((item) => {
-      youtubeIDs += `id=${item.key}&`
-    })
+    for (const obj in shared.value.videos) {
+      shared.value.videos[obj].forEach((video) => {
+        youtubeIDs += `id=${video.key}&`
+      })
+    }
+
     let res = await store.getYoutubeDetails(youtubeIDs)
-    for (let index = 0; index < res.items.length; index++) {
-      if (shared.value.videos[index].key === res.items[index].id) {
-        shared.value.videos[index].youtubeDetails = res.items[index]
-      }
+    for (const obj in shared.value.videos) {
+      shared.value.videos[obj].forEach((video) => {
+        const result = res.items.find(({ id }) => id === video.key)
+        video.youtubeDetails = result
+      })
     }
   }
 
@@ -47,7 +46,7 @@
         </h2>
         <ul>
           <li
-            v-for="(type, key) in filteredVideos"
+            v-for="(type, key) in shared.videos"
             :key="type"
             :class="{ selectedClass: key === route.query.selectedType }">
             <app-link
@@ -61,37 +60,38 @@
           </li>
         </ul>
       </div>
-
-      <div v-for="(videos, key) in filteredVideos" :key="key" class="videoContainer">
-        <template v-if="key === route.query.selectedType">
-          <template v-for="video in videos" :key="video">
-            <div class="videoDetails">
-              <app-link
-                :to="{
-                  path: `/movie/${route.params.id}/videos/player`,
-                  query: { key: video.key, name: video.name }
-                }">
-                <div class="videoPkg">
-                  <img :src="`https://i.ytimg.com/vi/${video.key}/maxresdefault.jpg`" alt="" />
-                  <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
+      <div class="videoContainer">
+        <template v-for="(videos, key) in shared.videos" :key="key">
+          <template v-if="key === route.query.selectedType">
+            <template v-for="video in videos" :key="video">
+              <div class="videoDetails">
+                <app-link
+                  :to="{
+                    path: `/movie/${route.params.id}/videos/player`,
+                    query: { key: video.key, name: video.name }
+                  }">
+                  <div class="videoPkg">
+                    <img :src="`https://i.ytimg.com/vi/${video.key}/maxresdefault.jpg`" alt="" />
+                    <div class="play"><icon-lib icon="fa-regular fa-circle-play" size="xl" /></div>
+                  </div>
+                </app-link>
+                <div class="details" v-if="video.youtubeDetails">
+                  <h4>{{ video.name }}</h4>
+                  <div>
+                    <p>{{ video.type }} &#x2022;</p>
+                    <p>{{ iso8601(video.youtubeDetails.contentDetails.duration) }} &#x2022;</p>
+                    <p>
+                      {{ $d(video.youtubeDetails.snippet.publishedAt, 'short') }}
+                    </p>
+                  </div>
+                  <div class="description">
+                    Description
+                    <span class="tooltip">{{ video.youtubeDetails.snippet.description }}</span>
+                  </div>
+                  <div class="channel">{{ video.youtubeDetails.snippet.channelTitle }}</div>
                 </div>
-              </app-link>
-              <div class="details" v-if="video.youtubeDetails">
-                <h4>{{ video.name }}</h4>
-                <div>
-                  <p>{{ video.type }} &#x2022;</p>
-                  <p>{{ iso8601(video.youtubeDetails.contentDetails.duration) }} &#x2022;</p>
-                  <p>
-                    {{ $d(video.youtubeDetails.snippet.publishedAt, 'short') }}
-                  </p>
-                </div>
-                <div class="description">
-                  Description
-                  <span class="tooltip">{{ video.youtubeDetails.snippet.description }}</span>
-                </div>
-                <div class="channel">{{ video.youtubeDetails.snippet.channelTitle }}</div>
               </div>
-            </div>
+            </template>
           </template>
         </template>
       </div>
@@ -109,6 +109,7 @@
     .videoSide {
       display: flex;
       flex-direction: column;
+      margin: 40px 0;
       .videoSum {
         h2 {
           color: white;
@@ -157,6 +158,8 @@
     .videoSide {
       display: flex;
       flex-direction: row;
+      flex-wrap: wrap;
+      margin: 40px 0;
     }
     .videoSum {
       margin-left: 40px;

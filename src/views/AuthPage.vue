@@ -18,9 +18,7 @@
     () => modeVar.value,
     () => (err.value = null)
   )
-  onMounted(() => {
-    authStore.init()
-  })
+ 
 </script>
 
 <template>

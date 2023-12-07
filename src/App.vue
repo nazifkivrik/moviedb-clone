@@ -1,7 +1,10 @@
 <script setup>
   import NavigationBar from './components/NavigationBar.vue'
+  import theFooter from '@/components/theFooter.vue'
   import { onMounted, onUnmounted, ref } from 'vue'
+  import { useAuthStore } from './stores/authStore'
   let lastScrollTop = 0
+  const authStore = useAuthStore()
   function scrollDirectionEvent() {
     const currentScrollTop = window.scrollY
 
@@ -20,6 +23,9 @@
   onUnmounted(() => {
     window.removeEventListener('scroll', scrollDirectionEvent)
   })
+  onMounted(() => {
+    authStore.init()
+  })
 </script>
 
 <template>
@@ -30,6 +36,7 @@
 
     <router-view></router-view>
   </body>
+  <the-footer></the-footer>
 </template>
 
 <style lang="scss">

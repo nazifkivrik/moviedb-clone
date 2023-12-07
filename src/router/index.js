@@ -19,6 +19,9 @@ import authPage from '@/views/AuthPage.vue'
 import { useAuthStore } from '@/stores/authStore.js'
 
 import userSettings from '@/views/user/UserSettings.vue'
+import createList from '@/views/user/createList.vue'
+import editList from '@/views/user/editList.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -113,6 +116,16 @@ const router = createRouter({
       name: 'settings',
       component: userSettings,
       meta: { title: 'Settings', auth: true }
+    },
+    {
+      path: '/list/new',
+      component: createList,
+      meta: { title: 'New List', auth: true }
+    },
+    {
+      path: '/list/edit',
+      component: editList,
+      meta: { title: 'Edit List', auth: true }
     }
   ]
 })

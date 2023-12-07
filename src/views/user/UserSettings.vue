@@ -1,28 +1,26 @@
 <script setup>
   import { useDbStore } from '@/stores/dbStore'
   import { useAuthStore } from '@/stores/authStore'
-  import { useRouter } from 'vue-router'
   import { ref, watch } from 'vue'
   const sessionId = ref()
   const counter = ref()
   const success = ref(false)
   const store = useDbStore()
   const authStore = useAuthStore()
-  const router = useRouter()
   const LinkTmdbAccount = async () => {
     const token = await store.createRequestToken()
     console.log(token)
-    const test = window.open(`https://www.themoviedb.org/authenticate/${token.request_token}`)
+    window.open(`https://www.themoviedb.org/authenticate/${token.request_token}`)
     const getSessionId = async (token) => {
       sessionId.value = await store.createSession(token)
-      console.log(sessionId.value)
 
       if (sessionId.value.success) {
-        console.log(authStore.user)
         success.value = true
-        await authStore.addDocument(authStore.user.email, { sessionId: sessionId.value.session_id })
+        authStore.user.sessionId = sessionId.value.session_id
+        await authStore.addDocument('users', authStore.user.email, {
+          sessionId: sessionId.value.session_id
+        })
       }
-      console.log(sessionId.value)
     }
     counter.value = setInterval(() => getSessionId(token.request_token), 30000)
   }

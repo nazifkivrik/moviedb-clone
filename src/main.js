@@ -29,7 +29,10 @@ import {
   faAnglesUp,
   faLeftLong,
   faRightLong,
-  faGears
+  faGears,
+  faHeart,
+  faList,
+  faBookmark
 } from '@fortawesome/free-solid-svg-icons'
 import { faFacebook, faImdb, faInstagram, faTwitter } from '@fortawesome/free-brands-svg-icons'
 library.add(
@@ -57,7 +60,10 @@ library.add(
   faAnglesUp,
   faLeftLong,
   faRightLong,
-  faGears
+  faGears,
+  faHeart,
+  faList,
+  faBookmark
 )
 const options = {
   method: 'GET',

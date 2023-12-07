@@ -91,6 +91,7 @@
     flex-direction: column;
     background-color: white;
     color: black;
+    z-index: 750;
     .select-btn {
       background-color: white;
       color: black;
@@ -128,7 +129,7 @@
       }
       .options {
         position: absolute;
-        top: 30px;
+        top: 40px;
         width: max-content;
         z-index: 800;
         background-color: white;

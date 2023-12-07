@@ -1,12 +1,12 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { getRandomColor, SortBy, GroupBy } from '@/utils/functions.js'
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 const options = {
   method: 'GET',
   headers: {
     accept: 'application/json',
-    Authorization:
-      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
+    Authorization: `Bearer ${import.meta.env.VITE_MOVIEDB_AUTHORIZATION}`
   }
 }
 const postOptions = {
@@ -14,8 +14,7 @@ const postOptions = {
   headers: {
     accept: 'application/json',
     'content-type': 'application/json',
-    Authorization:
-      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTM5ZmQxNzgyMTM2NzQwMjgxZThmOTg2MzliZjhjMyIsInN1YiI6IjY0MmRkMzBhYTZhNGMxMDBmNDJjNzkyNyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.pH71dmpF1xMXUASRPcJ_WUCcoTEK-4t9bloC61L07fo'
+    Authorization: `Bearer ${import.meta.env.VITE_MOVIEDB_AUTHORIZATION}`
   }
 }
 function genderNumToStr(number) {
@@ -159,7 +158,7 @@ export const useDbStore = defineStore('useDbStore', () => {
   }
   async function getYoutubeDetails(text) {
     const response = await fetch(
-      `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails${text}key=AIzaSyBxAhdYttCBLgGAr-r_s-D535sC9hgoI7o`
+      `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails${text}key=${YOUTUBE_API_KEY}`
     )
     const data = await response.json()
     return data
@@ -271,10 +270,16 @@ export const useDbStore = defineStore('useDbStore', () => {
   }
   const createSession = async (token) => {
     postOptions.body = JSON.stringify({ request_token: token })
-    console.log(postOptions)
-    console.log(token)
     const res = await fetch('https://api.themoviedb.org/3/authentication/session/new', postOptions)
     const data = await res.json()
+    return data
+  }
+  const getAccountLists = async (page, sessionId) => {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/account/account_id/lists?page=${page}&session_id=${sessionId}`,
+      options
+    )
+    const data = res.json()
     return data
   }
 
@@ -306,6 +311,7 @@ export const useDbStore = defineStore('useDbStore', () => {
     searchKeyword,
     imageURL,
     createRequestToken,
-    createSession
+    createSession,
+    getAccountLists
   }
 })
