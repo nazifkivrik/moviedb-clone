@@ -54,10 +54,10 @@ export const useDbStore = defineStore('useDbStore', () => {
   const region = computed(() => {
     return language.value.split('-')[1]
   })
+
   const mobile = computed(() => {
-    if (window.innerWidth < 750) {
-      return true
-    } else return false
+    if (window.innerWidth < 750) return true
+    else return false
   })
   /**
    *

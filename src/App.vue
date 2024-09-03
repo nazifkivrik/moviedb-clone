@@ -35,8 +35,8 @@
     </transition>
 
     <router-view></router-view>
+    <the-footer></the-footer>
   </body>
-  <the-footer></the-footer>
 </template>
 
 <style lang="scss">

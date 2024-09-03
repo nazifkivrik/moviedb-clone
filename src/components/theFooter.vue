@@ -1,9 +1,14 @@
+<script setup>
+  import { useDbStore } from '@/stores/dbStore.js'
+  const store = useDbStore()
+</script>
+
 <template>
   <footer>
-    <div class="logo">TMDB-C</div>
+    <div class="logo" v-if="!store.mobile">TMDB-C</div>
 
     <div class="links">
-      <ul>
+      <ul :class="{ gridTemplateMobile: store.mobile, gridTemplate: !store.mobile }">
         <li>
           <h2>THE BASICS</h2>
           <ul>
@@ -74,15 +79,27 @@
       </ul>
     </div>
     <div class="description">
-      This site is clone of TMDB. My purpose is improve myself. Source code is available on my&nbsp;
-      <app-link :to="'https://github.com/nazifkivrik/moviedb-clone'"> github </app-link>&nbsp; page.
-      You can reach me through this&nbsp;
-      <app-link :to="'https://nazifkivrik.art/'"> site </app-link>&nbsp; .
+      <div>
+        This site is clone of TMDB. My purpose is improve myself. Source code is available on
+        my&nbsp;
+        <app-link :to="'https://github.com/nazifkivrik/moviedb-clone'"> github </app-link>&nbsp;
+        page. You can reach me through this&nbsp;
+        <app-link :to="'https://nazifkivrik.art/'"> site </app-link>&nbsp; .
+      </div>
     </div>
   </footer>
 </template>
 
 <style scoped lang="scss">
+  .gridTemplateMobile {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+  }
+  .gridTemplate {
+    display: flex;
+    margin-left: 3em;
+  }
   footer {
     background-color: #03243f;
     color: white;
@@ -95,6 +112,7 @@
     ul {
       padding-inline-start: 0;
       list-style: none;
+
       h2 {
         width: max-content;
       }
@@ -102,15 +120,15 @@
         width: max-content;
       }
     }
+    .links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     ul {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      column-gap: 75px;
-
+      column-gap: 5em;
       margin: 0;
-
       ul {
         display: flex;
         flex-direction: column;
@@ -124,15 +142,18 @@
     }
 
     .description {
+      width: 100%;
       position: absolute;
       display: flex;
       justify-content: center;
       align-items: center;
-      bottom: 2px;
-      width: 100%;
-      font-size: 0.8em;
-      a {
-        text-decoration: underline;
+      div {
+        font-size: 0.8em;
+        display: block;
+        a {
+          display: inline;
+          text-decoration: underline;
+        }
       }
     }
   }
